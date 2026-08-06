@@ -1,36 +1,63 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SATRIA
 
-## Getting Started
+**Sistem Administrasi Terintegrasi Rikkes dan Izin Senjata Api**
 
-First, run the development server:
+Aplikasi web untuk mengelola data peserta, unggahan hasil MCU/rikkes dari RS Polri, dan administrasi izin senjata api.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Fitur
+
+- Login multi-peran: **Admin SATRIA** dan **MCU RS Polri**
+- Manajemen data peserta (nama, NRP, pangkat, satuan, keperluan)
+- Upload hasil rikkes oleh MCU (data medis + berkas PDF/gambar)
+- Cetak SKHPK dengan barcode sebagai TTD digital
+- Tracking izin senjata api yang terhubung dengan status rikkes
+- Dashboard ringkasan administrasi
+
+## Database (PostgreSQL)
+
+Password PostgreSQL **tidak diubah** oleh SATRIA. Pakai username/password yang sudah Anda miliki.
+
+1. Isi `.env.local` dengan password PostgreSQL Anda:
+
+```env
+DATABASE_URL=postgresql://postgres:PASSWORD_ANDA@127.0.0.1:5432/satria
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Buat database `satria` (opsional, jika belum ada):
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```powershell
+.\scripts\setup-postgres.ps1
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Script ini hanya membuat database dan menulis `.env.local`. **Tidak mereset password.**
 
-## Learn More
+3. Migrasi + seed:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run db:setup
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Menjalankan
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm install
+npm run db:setup
+npm run dev
+```
 
-## Deploy on Vercel
+Buka [http://localhost:3000](http://localhost:3000)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Akun demo aplikasi
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Peran | Username | Password |
+|-------|----------|----------|
+| Admin SATRIA | `admin` | `admin123` |
+| MCU RS Polri | `mcu` | `mcu123` |
+
+## Stack
+
+- Next.js (App Router)
+- TypeScript
+- Tailwind CSS
+- PostgreSQL (`pg`)
+- Unggahan berkas di `public/uploads/`

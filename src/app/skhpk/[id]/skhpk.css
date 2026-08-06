@@ -1,0 +1,245 @@
+.skhpk-page {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top right, rgba(201, 162, 39, 0.1), transparent 30%),
+    #eef3ef;
+  padding: 1.2rem;
+}
+
+.skhpk-toolbar {
+  width: min(100%, 820px);
+  margin: 0 auto 1rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+  background: #fff;
+  border: 1px solid var(--satria-line);
+  padding: 1rem 1.2rem;
+  box-shadow: var(--shadow);
+}
+
+.skhpk-toolbar h1 {
+  margin: 0.2rem 0;
+  font-size: 1.25rem;
+  color: var(--satria-green-deep);
+}
+
+.skhpk-toolbar p {
+  margin: 0;
+  color: var(--satria-muted);
+  font-size: 0.9rem;
+}
+
+.skhpk-guard {
+  max-width: 560px;
+  margin: 4rem auto;
+  background: #fff;
+  padding: 1.5rem;
+  border: 1px solid var(--satria-line);
+}
+
+.skhpk-sheet {
+  width: min(100%, 820px);
+  margin: 0 auto;
+  background: #fff;
+  color: #111;
+  padding: 28mm 22mm 24mm;
+  box-shadow: var(--shadow);
+  font-family: "Times New Roman", Times, "Noto Serif", serif;
+  line-height: 1.45;
+}
+
+.skhpk-header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1rem;
+  align-items: start;
+  border-bottom: 3px double #111;
+  padding-bottom: 0.7rem;
+}
+
+.skhpk-header-text {
+  text-align: center;
+  padding-left: 88px;
+}
+
+.skhpk-header-text p {
+  margin: 0;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  font-size: 15px;
+}
+
+.skhpk-logo {
+  width: 88px;
+  height: 88px;
+  object-fit: contain;
+}
+
+.skhpk-title-block {
+  text-align: center;
+  margin: 1.4rem 0 1.2rem;
+}
+
+.skhpk-title-block h2 {
+  margin: 0;
+  font-size: 15.5px;
+  text-decoration: underline;
+  letter-spacing: 0.01em;
+}
+
+.skhpk-title-block p {
+  margin: 0.35rem 0 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.skhpk-body {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1rem;
+  font-size: 14px;
+  text-align: justify;
+}
+
+.skhpk-body > li {
+  display: grid;
+  grid-template-columns: 1.4rem 1fr;
+  gap: 0.4rem;
+}
+
+.skhpk-body p {
+  margin: 0;
+}
+
+.skhpk-point {
+  font-weight: 700;
+}
+
+.skhpk-bio {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.7rem 0 0.9rem;
+  font-size: 14px;
+}
+
+.skhpk-bio td {
+  padding: 0.12rem 0.25rem;
+  vertical-align: top;
+  border: 0;
+}
+
+.skhpk-bio td:nth-child(1) {
+  width: 1.2rem;
+}
+
+.skhpk-bio td:nth-child(2) {
+  width: 7.5rem;
+}
+
+.skhpk-bio td:nth-child(3) {
+  width: 0.9rem;
+}
+
+.skhpk-result {
+  margin-top: 0.4rem !important;
+}
+
+.strike {
+  text-decoration: line-through;
+}
+
+.skhpk-closing {
+  margin: 1.2rem 0 1.6rem;
+  font-size: 14px;
+}
+
+.skhpk-footer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  font-size: 14px;
+}
+
+.skhpk-tujuan p,
+.skhpk-sign p {
+  margin: 0;
+}
+
+.skhpk-sign {
+  text-align: center;
+}
+
+.skhpk-barcode-box {
+  margin: 0.7rem auto;
+  width: fit-content;
+  min-height: 90px;
+  display: grid;
+  place-items: center;
+  gap: 0.25rem;
+}
+
+.skhpk-barcode svg {
+  max-width: 220px;
+  height: auto;
+}
+
+.skhpk-barcode-caption {
+  font-size: 10px !important;
+  color: #444;
+  font-family: Arial, sans-serif;
+}
+
+.skhpk-signer-name {
+  margin-top: 0.35rem !important;
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+
+  body {
+    background: #fff !important;
+  }
+
+  .no-print,
+  .sidebar,
+  .topbar,
+  .app-shell > aside {
+    display: none !important;
+  }
+
+  .skhpk-page {
+    background: #fff;
+    padding: 0;
+  }
+
+  .skhpk-sheet {
+    width: 100%;
+    box-shadow: none;
+    padding: 0;
+  }
+}
+
+@media (max-width: 760px) {
+  .skhpk-toolbar,
+  .skhpk-footer {
+    grid-template-columns: 1fr;
+    display: grid;
+  }
+
+  .skhpk-header-text {
+    padding-left: 0;
+  }
+
+  .skhpk-sheet {
+    padding: 1.2rem;
+  }
+}
