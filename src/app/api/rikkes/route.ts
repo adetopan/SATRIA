@@ -3,12 +3,7 @@ import { promises as fs } from "fs";
 import path from "path";
 import { requireSession } from "@/lib/auth";
 import { getPeserta, getRikkes, savePeserta, saveRikkes, uid } from "@/lib/db";
-import {
-  buildBarcodeValue,
-  buildNomorSkhpk,
-  nextSkhpkSeq,
-} from "@/lib/skhpk";
-import type { HasilRikkes, Rikkes } from "@/lib/types";
+import type { Rikkes } from "@/lib/types";
 
 export async function GET() {
   const session = await requireSession();
@@ -37,16 +32,12 @@ export async function POST(request: Request) {
   const tanggalPemeriksaan = String(form.get("tanggalPemeriksaan") || "");
   const rumahSakit = String(form.get("rumahSakit") || "RS Bhayangkara / MCU RS Polri").trim();
   const dokter = String(form.get("dokter") || "").trim();
-  const hasil = String(form.get("hasil") || "PENDING") as HasilRikkes;
   const tekananDarah = String(form.get("tekananDarah") || "").trim();
   const denyutNadi = String(form.get("denyutNadi") || "").trim();
   const tinggiBadan = String(form.get("tinggiBadan") || "").trim();
   const beratBadan = String(form.get("beratBadan") || "").trim();
   const visus = String(form.get("visus") || "").trim();
   const catatan = String(form.get("catatan") || "").trim();
-  const ditujukanKepada = String(
-    form.get("ditujukanKepada") || "As SDM Kapolri",
-  ).trim();
   const file = form.get("file");
 
   if (!pesertaId || !nomorSurat || !tanggalPemeriksaan || !dokter) {
@@ -95,29 +86,17 @@ export async function POST(request: Request) {
     filePath = `/uploads/${stored}`;
   }
 
-  const hasilFinal: HasilRikkes = ["LAYAK", "TIDAK_LAYAK", "PENDING"].includes(
-    hasil,
-  )
-    ? hasil
-    : "PENDING";
-
+  // MCU hanya mengunggah data pemeriksaan; kelayakan ditentukan di Izin Senjata Api.
   const rikkes = await getRikkes();
-  const approved = hasilFinal === "LAYAK";
-  const nomorSkhpk = approved
-    ? buildNomorSkhpk(nextSkhpkSeq(rikkes), tanggalPemeriksaan)
-    : undefined;
 
   const record: Rikkes = {
     id: uid("r"),
     pesertaId,
     nomorSurat,
-    nomorSkhpk,
     tanggalPemeriksaan,
-    tanggalTerbit: approved ? tanggalPemeriksaan : undefined,
-    ditujukanKepada: approved ? ditujukanKepada : undefined,
     rumahSakit,
     dokter,
-    hasil: hasilFinal,
+    hasil: "PENDING",
     tekananDarah,
     denyutNadi,
     tinggiBadan,
@@ -131,19 +110,12 @@ export async function POST(request: Request) {
     createdAt: new Date().toISOString(),
   };
 
-  if (approved) {
-    record.barcodeValue = buildBarcodeValue(
-      record,
-      pesertaList[pesertaIndex],
-    );
-  }
-
   rikkes.unshift(record);
   await saveRikkes(rikkes);
 
   pesertaList[pesertaIndex] = {
     ...pesertaList[pesertaIndex],
-    statusRikkes: record.hasil,
+    statusRikkes: "PENDING",
     updatedAt: new Date().toISOString(),
   };
   await savePeserta(pesertaList);

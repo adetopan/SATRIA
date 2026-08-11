@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Peserta } from "@/lib/types";
+import { labelHasil } from "@/lib/format";
 
 export function IzinForm({ peserta }: { peserta: Peserta[] }) {
   const router = useRouter();
@@ -62,7 +63,10 @@ export function IzinForm({ peserta }: { peserta: Peserta[] }) {
       <div className="panel-head">
         <div>
           <h2>Ajukan Izin Senjata Api</h2>
-          <p>Pengajuan terhubung dengan data peserta dan status rikkes.</p>
+          <p>
+            Pengajuan terhubung dengan data peserta dan hasil MCU. Status
+            kelayakan mengikuti keputusan Setujui / Tolak pada daftar di bawah.
+          </p>
         </div>
       </div>
 
@@ -78,7 +82,7 @@ export function IzinForm({ peserta }: { peserta: Peserta[] }) {
           >
             {peserta.map((p) => (
               <option key={p.id} value={p.id}>
-                {p.nama} — Rikkes: {p.statusRikkes}
+                {p.nama} — Kelayakan: {labelHasil(p.statusRikkes)}
               </option>
             ))}
           </select>

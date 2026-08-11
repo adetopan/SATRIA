@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { getIzin, getPeserta } from "@/lib/db";
+import { getIzin, getPeserta, getRikkes } from "@/lib/db";
 import { formatDate } from "@/lib/format";
 import { IzinBadge, RikkesBadge } from "@/components/StatusBadge";
 import { IzinForm } from "@/components/IzinForm";
@@ -10,7 +10,11 @@ export default async function IzinSenjataPage() {
   const session = await getSession();
   if (!session || session.role !== "admin") redirect("/dashboard");
 
-  const [izin, peserta] = await Promise.all([getIzin(), getPeserta()]);
+  const [izin, peserta, rikkes] = await Promise.all([
+    getIzin(),
+    getPeserta(),
+    getRikkes(),
+  ]);
 
   return (
     <div>
@@ -21,7 +25,8 @@ export default async function IzinSenjataPage() {
           <div>
             <h2>Daftar Izin Senjata Api</h2>
             <p>
-              Status izin mengikuti kelengkapan dan hasil rikkes peserta.
+              Saat pengajuan disetujui, status kelayakan rikkes otomatis menjadi
+              Layak. Jika ditolak, status menjadi Tidak Layak.
             </p>
           </div>
         </div>
@@ -36,7 +41,8 @@ export default async function IzinSenjataPage() {
                   <th>Nomor</th>
                   <th>Peserta</th>
                   <th>Jenis</th>
-                  <th>Rikkes</th>
+                  <th>Berkas MCU</th>
+                  <th>Kelayakan Rikkes</th>
                   <th>Status Izin</th>
                   <th>Aksi</th>
                 </tr>
@@ -44,6 +50,11 @@ export default async function IzinSenjataPage() {
               <tbody>
                 {izin.map((i) => {
                   const p = peserta.find((x) => x.id === i.pesertaId);
+                  const r =
+                    (i.rikkesId
+                      ? rikkes.find((x) => x.id === i.rikkesId)
+                      : undefined) ||
+                    rikkes.find((x) => x.pesertaId === i.pesertaId);
                   return (
                     <tr key={i.id}>
                       <td>
@@ -63,6 +74,22 @@ export default async function IzinSenjataPage() {
                         <div style={{ color: "var(--satria-muted)", fontSize: "0.8rem" }}>
                           {i.keperluan}
                         </div>
+                      </td>
+                      <td>
+                        {r?.filePath ? (
+                          <a
+                            href={r.filePath}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="linkish"
+                          >
+                            {r.fileName || "Lihat berkas"}
+                          </a>
+                        ) : (
+                          <span style={{ color: "var(--satria-muted)" }}>
+                            Belum ada
+                          </span>
+                        )}
                       </td>
                       <td>
                         <RikkesBadge value={p?.statusRikkes || "PENDING"} />

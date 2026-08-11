@@ -15,7 +15,10 @@ export default async function UploadMcuPage() {
         <div className="panel-head">
           <div>
             <h2>Riwayat Upload MCU</h2>
-            <p>Semua hasil rikkes yang sudah masuk ke SATRIA.</p>
+            <p>
+              Data pemeriksaan yang diunggah MCU. Status Layak / Tidak Layak
+              ditentukan di menu Izin Senjata Api.
+            </p>
           </div>
         </div>
 

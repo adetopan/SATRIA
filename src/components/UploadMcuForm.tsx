@@ -3,6 +3,7 @@
 import { FormEvent, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Peserta } from "@/lib/types";
+import { labelHasil } from "@/lib/format";
 
 export function UploadMcuForm({ peserta }: { peserta: Peserta[] }) {
   const router = useRouter();
@@ -13,14 +14,12 @@ export function UploadMcuForm({ peserta }: { peserta: Peserta[] }) {
     "RS Bhayangkara / MCU RS Polri",
   );
   const [dokter, setDokter] = useState("");
-  const [hasil, setHasil] = useState("LAYAK");
   const [tekananDarah, setTekananDarah] = useState("");
   const [denyutNadi, setDenyutNadi] = useState("");
   const [tinggiBadan, setTinggiBadan] = useState("");
   const [beratBadan, setBeratBadan] = useState("");
   const [visus, setVisus] = useState("");
   const [catatan, setCatatan] = useState("");
-  const [ditujukanKepada, setDitujukanKepada] = useState("As SDM Kapolri");
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -43,14 +42,12 @@ export function UploadMcuForm({ peserta }: { peserta: Peserta[] }) {
     form.set("tanggalPemeriksaan", tanggalPemeriksaan);
     form.set("rumahSakit", rumahSakit);
     form.set("dokter", dokter);
-    form.set("hasil", hasil);
     form.set("tekananDarah", tekananDarah);
     form.set("denyutNadi", denyutNadi);
     form.set("tinggiBadan", tinggiBadan);
     form.set("beratBadan", beratBadan);
     form.set("visus", visus);
     form.set("catatan", catatan);
-    form.set("ditujukanKepada", ditujukanKepada);
     if (file) form.set("file", file);
 
     const res = await fetch("/api/rikkes", {
@@ -65,7 +62,9 @@ export function UploadMcuForm({ peserta }: { peserta: Peserta[] }) {
       return;
     }
 
-    setSuccess("Hasil rikkes berhasil diunggah ke SATRIA.");
+    setSuccess(
+      "Hasil MCU berhasil diunggah. Status kelayakan ditentukan di menu Izin Senjata Api.",
+    );
     setNomorSurat("");
     setTanggalPemeriksaan("");
     setDokter("");
@@ -95,8 +94,9 @@ export function UploadMcuForm({ peserta }: { peserta: Peserta[] }) {
         <div>
           <h2>Upload Hasil Rikkes MCU</h2>
           <p>
-            Akses khusus MCU RS Polri untuk mengunggah hasil pemeriksaan peserta
-            ke aplikasi SATRIA.
+            Akses khusus MCU RS Polri untuk mengunggah data pemeriksaan peserta.
+            Penentuan Layak / Tidak Layak dilakukan admin di menu Izin Senjata
+            Api.
           </p>
         </div>
       </div>
@@ -124,8 +124,8 @@ export function UploadMcuForm({ peserta }: { peserta: Peserta[] }) {
           </select>
           {selected ? (
             <small style={{ color: "var(--satria-muted)" }}>
-              Satuan: {selected.satuan} · Status rikkes saat ini:{" "}
-              {selected.statusRikkes}
+              Satuan: {selected.satuan} · Status kelayakan saat ini:{" "}
+              {labelHasil(selected.statusRikkes)}
             </small>
           ) : null}
         </div>
@@ -163,14 +163,6 @@ export function UploadMcuForm({ peserta }: { peserta: Peserta[] }) {
             onChange={(e) => setDokter(e.target.value)}
             required
           />
-        </div>
-        <div className="field">
-          <label>Hasil Rikkes</label>
-          <select value={hasil} onChange={(e) => setHasil(e.target.value)}>
-            <option value="LAYAK">Layak</option>
-            <option value="TIDAK_LAYAK">Tidak Layak</option>
-            <option value="PENDING">Menunggu</option>
-          </select>
         </div>
         <div className="field">
           <label>Tekanan Darah</label>
@@ -216,14 +208,6 @@ export function UploadMcuForm({ peserta }: { peserta: Peserta[] }) {
             rows={3}
             value={catatan}
             onChange={(e) => setCatatan(e.target.value)}
-          />
-        </div>
-        <div className="field full">
-          <label>Ditujukan Kepada (untuk SKHPK jika Layak)</label>
-          <input
-            value={ditujukanKepada}
-            onChange={(e) => setDitujukanKepada(e.target.value)}
-            placeholder="As SDM Kapolri"
           />
         </div>
         <div className="field full">

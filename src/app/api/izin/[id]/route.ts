@@ -1,9 +1,59 @@
 import { NextResponse } from "next/server";
 import { requireSession } from "@/lib/auth";
-import { getIzin, getPeserta, saveIzin, savePeserta } from "@/lib/db";
-import type { IzinSenjata } from "@/lib/types";
+import {
+  getIzin,
+  getPeserta,
+  getRikkes,
+  saveIzin,
+  savePeserta,
+  saveRikkes,
+} from "@/lib/db";
+import {
+  buildBarcodeValue,
+  buildNomorSkhpk,
+  nextSkhpkSeq,
+} from "@/lib/skhpk";
+import type { HasilRikkes, IzinSenjata, Peserta, Rikkes } from "@/lib/types";
 
 type Params = { params: Promise<{ id: string }> };
+
+function hasilFromIzinStatus(
+  status: IzinSenjata["status"],
+): HasilRikkes | null {
+  if (status === "DISETUJUI") return "LAYAK";
+  if (status === "DITOLAK") return "TIDAK_LAYAK";
+  return null;
+}
+
+function applyHasilToRikkes(
+  rikkes: Rikkes,
+  peserta: Peserta,
+  hasil: HasilRikkes,
+  allRikkes: Rikkes[],
+): Rikkes {
+  if (hasil === "LAYAK") {
+    const nomorSkhpk =
+      rikkes.nomorSkhpk ||
+      buildNomorSkhpk(nextSkhpkSeq(allRikkes), rikkes.tanggalPemeriksaan);
+    const next: Rikkes = {
+      ...rikkes,
+      hasil,
+      nomorSkhpk,
+      tanggalTerbit: rikkes.tanggalTerbit || rikkes.tanggalPemeriksaan,
+      ditujukanKepada: rikkes.ditujukanKepada || "As SDM Kapolri",
+    };
+    next.barcodeValue = buildBarcodeValue(next, peserta);
+    return next;
+  }
+
+  return {
+    ...rikkes,
+    hasil,
+    nomorSkhpk: undefined,
+    tanggalTerbit: undefined,
+    barcodeValue: undefined,
+  };
+}
 
 export async function PUT(request: Request, { params }: Params) {
   const session = await requireSession(["admin"]);
@@ -42,11 +92,49 @@ export async function PUT(request: Request, { params }: Params) {
       DISETUJUI: "DISETUJUI",
       DITOLAK: "DITOLAK",
     };
-    pesertaList[pIndex] = {
+
+    let nextPeserta = {
       ...pesertaList[pIndex],
       statusIzin: map[status],
       updatedAt: new Date().toISOString(),
     };
+
+    const hasil = hasilFromIzinStatus(status);
+    if (hasil) {
+      nextPeserta = {
+        ...nextPeserta,
+        statusRikkes: hasil,
+      };
+
+      const rikkesList = await getRikkes();
+      const linkedId = list[index].rikkesId;
+      let rIndex = linkedId
+        ? rikkesList.findIndex((r) => r.id === linkedId)
+        : -1;
+      if (rIndex < 0) {
+        rIndex = rikkesList.findIndex(
+          (r) => r.pesertaId === list[index].pesertaId,
+        );
+      }
+
+      if (rIndex >= 0) {
+        rikkesList[rIndex] = applyHasilToRikkes(
+          rikkesList[rIndex],
+          nextPeserta,
+          hasil,
+          rikkesList,
+        );
+        list[index] = {
+          ...list[index],
+          rikkesId: rikkesList[rIndex].id,
+          updatedAt: new Date().toISOString(),
+        };
+        await saveIzin(list);
+        await saveRikkes(rikkesList);
+      }
+    }
+
+    pesertaList[pIndex] = nextPeserta;
     await savePeserta(pesertaList);
   }
 
