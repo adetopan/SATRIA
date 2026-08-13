@@ -40,7 +40,7 @@ export async function POST(request: Request) {
   const catatan = String(form.get("catatan") || "").trim();
   const file = form.get("file");
 
-  if (!pesertaId || !nomorSurat || !tanggalPemeriksaan || !dokter) {
+  if (!pesertaId || !tanggalPemeriksaan) {
     return NextResponse.json(
       { error: "Data rikkes belum lengkap." },
       { status: 400 },

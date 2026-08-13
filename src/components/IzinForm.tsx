@@ -82,7 +82,7 @@ export function IzinForm({ peserta }: { peserta: Peserta[] }) {
           >
             {peserta.map((p) => (
               <option key={p.id} value={p.id}>
-                {p.nama} — Kelayakan: {labelHasil(p.statusRikkes)}
+                {p.nama}
               </option>
             ))}
           </select>
