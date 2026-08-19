@@ -1,21 +1,33 @@
+/* =========================================================
+   HALAMAN
+   ========================================================= */
+
 .skhpk-page {
   min-height: 100vh;
-  background:
-    radial-gradient(circle at top right, rgba(201, 162, 39, 0.1), transparent 30%),
-    #eef3ef;
+  background: #eef3ef;
   padding: 1.2rem;
 }
+
+
+/* =========================================================
+   TOOLBAR
+   ========================================================= */
 
 .skhpk-toolbar {
   width: min(100%, 820px);
   margin: 0 auto 1rem;
+
   display: flex;
   justify-content: space-between;
-  gap: 1rem;
   align-items: center;
+
+  gap: 1rem;
+
   background: #fff;
   border: 1px solid var(--satria-line);
+
   padding: 1rem 1.2rem;
+
   box-shadow: var(--shadow);
 }
 
@@ -31,182 +43,446 @@
   font-size: 0.9rem;
 }
 
+
+/* =========================================================
+   GUARD
+   ========================================================= */
+
 .skhpk-guard {
   max-width: 560px;
   margin: 4rem auto;
+
   background: #fff;
+
   padding: 1.5rem;
+
   border: 1px solid var(--satria-line);
 }
 
+
+/* =========================================================
+   KERTAS A4
+   ========================================================= */
+
 .skhpk-sheet {
-  width: min(100%, 820px);
+  width: 210mm;
+  min-height: 297mm;
+
   margin: 0 auto;
+
   background: #fff;
   color: #111;
-  padding: 28mm 22mm 24mm;
+
+  padding: 18mm 20mm 15mm;
+
   box-shadow: var(--shadow);
-  font-family: "Times New Roman", Times, "Noto Serif", serif;
-  line-height: 1.45;
+
+  font-family:
+    "Times New Roman",
+    Times,
+    "Noto Serif",
+    serif;
+
+  font-size: 12px;
+  line-height: 1.35;
 }
+
+
+/* =========================================================
+   KOP SURAT
+   ========================================================= */
 
 .skhpk-header {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 1rem;
-  align-items: start;
-  border-bottom: 3px double #111;
-  padding-bottom: 0.7rem;
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+
+  text-align: center;
+
+  padding-bottom: 7px;
+
+  border-bottom: 1px solid #111;
 }
 
+
+/* Logo berada di tengah atas */
+
+.skhpk-logo-wrapper {
+  width: 100%;
+
+  display: flex;
+  justify-content: center;
+
+  margin-bottom: 3px;
+}
+
+.skhpk-logo {
+  width: 58px;
+  height: 58px;
+
+  object-fit: contain;
+}
+
+
+/* Tulisan kop */
+
 .skhpk-header-text {
-  text-align: center;
-  padding-left: 88px;
+  width: 100%;
+
+  text-align: left;
+
+  padding: 0;
 }
 
 .skhpk-header-text p {
   margin: 0;
+
   font-weight: 700;
-  letter-spacing: 0.02em;
-  font-size: 15px;
+
+  font-size: 11px;
+
+  line-height: 1.2;
+
+  letter-spacing: 0;
 }
 
-.skhpk-logo {
-  width: 88px;
-  height: 88px;
-  object-fit: contain;
-}
+
+/* =========================================================
+   JUDUL SURAT
+   ========================================================= */
 
 .skhpk-title-block {
   text-align: center;
-  margin: 1.4rem 0 1.2rem;
+
+  margin-top: 13px;
+  margin-bottom: 14px;
 }
 
 .skhpk-title-block h2 {
   margin: 0;
-  font-size: 15.5px;
+
+  font-size: 13px;
+
+  font-weight: 700;
+
   text-decoration: underline;
-  letter-spacing: 0.01em;
+
+  line-height: 1.2;
 }
 
 .skhpk-title-block p {
-  margin: 0.35rem 0 0;
-  font-size: 14px;
+  margin: 3px 0 0;
+
+  font-size: 11px;
+
   font-weight: 700;
+
+  line-height: 1.2;
 }
 
+
+/* =========================================================
+   BODY SURAT
+   ========================================================= */
+
 .skhpk-body {
-  list-style: none;
   margin: 0;
   padding: 0;
-  display: grid;
-  gap: 1rem;
-  font-size: 14px;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 10px;
+
+  font-size: 11.5px;
+
   text-align: justify;
 }
 
-.skhpk-body > li {
+
+/* Setiap nomor */
+
+.skhpk-row {
   display: grid;
-  grid-template-columns: 1.4rem 1fr;
-  gap: 0.4rem;
+
+  grid-template-columns: 18px 1fr;
+
+  column-gap: 4px;
+
+  align-items: start;
 }
 
-.skhpk-body p {
+
+/* Nomor 1,2,3 */
+
+.skhpk-number {
+  font-weight: 700;
+
+  text-align: left;
+}
+
+
+/* Isi */
+
+.skhpk-content {
+  min-width: 0;
+}
+
+.skhpk-content p {
   margin: 0;
 }
 
-.skhpk-point {
-  font-weight: 700;
-}
+
+/* =========================================================
+   DATA PESERTA
+   ========================================================= */
 
 .skhpk-bio {
   width: 100%;
+
   border-collapse: collapse;
-  margin: 0.7rem 0 0.9rem;
-  font-size: 14px;
+
+  margin: 7px 0 8px;
+
+  font-size: 11.5px;
 }
 
 .skhpk-bio td {
-  padding: 0.12rem 0.25rem;
+  padding: 1px 2px;
+
   vertical-align: top;
+
   border: 0;
+
+  line-height: 1.3;
 }
+
+
+/* huruf a,b,c */
 
 .skhpk-bio td:nth-child(1) {
-  width: 1.2rem;
+  width: 17px;
 }
+
+
+/* nama field */
 
 .skhpk-bio td:nth-child(2) {
-  width: 7.5rem;
+  width: 105px;
 }
 
+
+/* titik dua */
+
 .skhpk-bio td:nth-child(3) {
-  width: 0.9rem;
+  width: 10px;
+
+  text-align: center;
+}
+
+
+/* value */
+
+.skhpk-bio td:nth-child(4) {
+  width: auto;
+}
+
+
+/* =========================================================
+   HASIL PEMERIKSAAN
+   ========================================================= */
+
+.skhpk-dinyatakan {
+  margin-top: 6px !important;
+
+  font-weight: 400;
 }
 
 .skhpk-result {
-  margin-top: 0.4rem !important;
+  margin-top: 3px !important;
+
+  line-height: 1.4;
+
+  text-align: justify;
 }
 
 .strike {
   text-decoration: line-through;
 }
 
+
+/* =========================================================
+   PENUTUP
+   ========================================================= */
+
 .skhpk-closing {
-  margin: 1.2rem 0 1.6rem;
-  font-size: 14px;
+  margin-top: 13px;
+  margin-bottom: 22px;
+
+  font-size: 11.5px;
+
+  line-height: 1.4;
 }
+
+
+/* =========================================================
+   FOOTER
+   ========================================================= */
 
 .skhpk-footer {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-  font-size: 14px;
+
+  grid-template-columns: 42% 58%;
+
+  gap: 0;
+
+  font-size: 11.5px;
+
+  margin-top: 5px;
 }
 
-.skhpk-tujuan p,
-.skhpk-sign p {
-  margin: 0;
+
+/* =========================================================
+   TUJUAN SURAT
+   ========================================================= */
+
+.skhpk-tujuan {
+  padding-top: 38px;
 }
+
+.skhpk-tujuan p {
+  margin: 0;
+
+  line-height: 1.4;
+}
+
+
+/* =========================================================
+   BAGIAN TANDA TANGAN
+   ========================================================= */
 
 .skhpk-sign {
   text-align: center;
+
+  position: relative;
+
+  min-height: 175px;
 }
 
+.skhpk-sign p {
+  margin: 0;
+
+  line-height: 1.35;
+}
+
+.skhpk-place {
+  margin-bottom: 0 !important;
+}
+
+
+/* Jabatan */
+
+.skhpk-sign-title {
+  margin-top: 3px !important;
+
+  font-weight: 700;
+
+  font-size: 11px;
+}
+
+.skhpk-sign-position {
+  font-weight: 700;
+
+  margin-top: 0 !important;
+}
+
+
+/* =========================================================
+   BARCODE
+   ========================================================= */
+
 .skhpk-barcode-box {
-  margin: 0.7rem auto;
-  width: fit-content;
-  min-height: 90px;
-  display: grid;
-  place-items: center;
-  gap: 0.25rem;
+  width: 100%;
+
+  min-height: 78px;
+
+  margin: 7px auto 4px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 2px;
 }
 
 .skhpk-barcode svg {
-  max-width: 220px;
-  height: auto;
+  width: 180px;
+  max-width: 180px;
+
+  height: 45px;
 }
 
 .skhpk-barcode-caption {
-  font-size: 10px !important;
-  color: #444;
   font-family: Arial, sans-serif;
+
+  font-size: 7px !important;
+
+  color: #444;
+
+  line-height: 1.2 !important;
 }
+
+
+/* =========================================================
+   NAMA PENANDATANGAN
+   ========================================================= */
 
 .skhpk-signer-name {
-  margin-top: 0.35rem !important;
+  margin-top: 5px !important;
+
   font-weight: 700;
+
   text-decoration: underline;
+
+  font-size: 11.5px;
 }
 
+.skhpk-signer-rank {
+  font-size: 11.5px;
+}
+
+
+/* =========================================================
+   PRINT
+   ========================================================= */
+
 @media print {
+
   @page {
-    size: A4;
-    margin: 12mm;
+    size: A4 portrait;
+
+    margin: 0;
+  }
+
+  html,
+  body {
+    width: 210mm;
+    height: 297mm;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    background: #fff !important;
   }
 
   body {
-    background: #fff !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 
   .no-print,
@@ -217,29 +493,61 @@
   }
 
   .skhpk-page {
-    background: #fff;
+    width: 210mm;
+    min-height: 297mm;
+
+    margin: 0;
     padding: 0;
+
+    background: #fff;
+  }
+
+  .skhpk-sheet {
+    width: 210mm;
+    min-height: 297mm;
+
+    margin: 0;
+
+    padding: 18mm 20mm 15mm;
+
+    box-shadow: none;
+
+    page-break-after: avoid;
+    page-break-inside: avoid;
+  }
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 760px) {
+
+  .skhpk-toolbar {
+    display: grid;
+
+    grid-template-columns: 1fr;
   }
 
   .skhpk-sheet {
     width: 100%;
-    box-shadow: none;
-    padding: 0;
-  }
-}
+    min-height: auto;
 
-@media (max-width: 760px) {
-  .skhpk-toolbar,
-  .skhpk-footer {
-    grid-template-columns: 1fr;
-    display: grid;
-  }
-
-  .skhpk-header-text {
-    padding-left: 0;
-  }
-
-  .skhpk-sheet {
     padding: 1.2rem;
   }
+
+  .skhpk-footer {
+    grid-template-columns: 1fr;
+  }
+
+  .skhpk-tujuan {
+    padding-top: 10px;
+    margin-bottom: 25px;
+  }
+
+  .skhpk-sign {
+    min-height: auto;
+  }
+
 }

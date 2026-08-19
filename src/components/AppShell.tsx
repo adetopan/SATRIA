@@ -7,7 +7,7 @@ import type { SessionUser } from "@/lib/types";
 
 const nav = [
   { href: "/dashboard", label: "Dashboard", roles: ["admin", "mcu"] },
-  { href: "/peserta", label: "Data Peserta", roles: ["admin", "mcu"] },
+  { href: "/peserta", label: "Data Peserta", roles: ["admin"] },
   { href: "/upload-mcu", label: "Upload MCU", roles: ["admin", "mcu"] },
   { href: "/izin-senjata", label: "Izin Senjata Api", roles: ["admin"] },
 ];

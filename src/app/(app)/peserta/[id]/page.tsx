@@ -64,7 +64,7 @@ export default async function PesertaDetailPage({ params }: Params) {
             <dt>Keperluan</dt>
             <dd>{labelKeperluan(peserta.keperluan)}</dd>
           </div>
-          <div>
+          {/* <div>
             <dt>Status Rikkes</dt>
             <dd>
               <RikkesBadge value={peserta.statusRikkes} />
@@ -75,7 +75,7 @@ export default async function PesertaDetailPage({ params }: Params) {
             <dd>
               <IzinBadge value={peserta.statusIzin} />
             </dd>
-          </div>
+          </div> */}
         </dl>
       </section>
 
