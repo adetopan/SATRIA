@@ -1,0 +1,117 @@
+.ttd-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 1.2rem;
+  background: #cfcfcf;
+}
+
+.ttd-card {
+  width: min(100%, 760px);
+  background: #ffffff;
+  color: #111;
+  border: 1px solid #111;
+  padding: 16px 18px 18px;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.ttd-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 8px;
+  border-bottom: 3px double #111;
+}
+
+.ttd-logo {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+}
+
+.ttd-header-text {
+  width: fit-content;
+  max-width: 100%;
+  text-align: center;
+}
+
+.ttd-header-text p {
+  margin: 0;
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1.22;
+  letter-spacing: 0.2px;
+  text-transform: uppercase;
+}
+
+.ttd-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 28px;
+  align-items: start;
+  margin-top: 14px;
+}
+
+.ttd-col {
+  display: grid;
+  gap: 7px;
+}
+
+.ttd-field {
+  display: grid;
+  grid-template-columns: 118px 12px 1fr;
+  align-items: start;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.ttd-field span:first-child {
+  white-space: nowrap;
+}
+
+.ttd-sign-box {
+  width: 128px;
+  height: 86px;
+  padding: 6px;
+  background: #ffffff;
+  border: 1px solid #9a9a9a;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.ttd-sign-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #ffffff;
+}
+
+.ttd-footer {
+  margin: 18px 0 2px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 12px;
+  line-height: 1.5;
+  text-transform: uppercase;
+}
+
+@media (max-width: 640px) {
+  .ttd-header-text p {
+    font-size: 11px;
+  }
+
+  .ttd-logo {
+    width: 60px;
+    height: 60px;
+  }
+
+  .ttd-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ttd-field {
+    grid-template-columns: 110px 12px 1fr;
+  }
+}

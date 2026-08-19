@@ -1,14 +1,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { Barcode } from "@/components/Barcode";
 import { PrintButton } from "@/components/PrintButton";
+import { QrCode } from "@/components/QrCode";
+import { getAppOrigin } from "@/lib/app-url";
 import { getSession } from "@/lib/auth";
 import { getPeserta, getRikkes } from "@/lib/db";
 import {
   SKHPK_DASAR,
   SKHPK_SIGNER,
-  buildBarcodeValue,
   canPrintSkhpk,
   formatLongDateId,
   memenuhiSyarat,
@@ -65,9 +65,8 @@ export default async function SkhpkPage({ params }: Params) {
   const tanggalTerbit =
     rikkes.tanggalTerbit || rikkes.tanggalPemeriksaan;
 
-  const barcode =
-    rikkes.barcodeValue ||
-    buildBarcodeValue(rikkes, peserta);
+  const origin = await getAppOrigin();
+  const qrUrl = `${origin}/ttd/${rikkes.id}`;
 
   const lulus = memenuhiSyarat(rikkes.hasil);
 
@@ -87,7 +86,7 @@ export default async function SkhpkPage({ params }: Params) {
           </h1>
 
           <p>
-            TTD diganti barcode verifikasi digital.
+            TTD diganti QR code specimen tanda tangan.
           </p>
         </div>
 
@@ -107,17 +106,7 @@ export default async function SkhpkPage({ params }: Params) {
       <article className="skhpk-sheet">
 
         {/* ================= KOP ================= */}
-        {/* <header className="skhpk-header">
-          <div className="skhpk-header-text">
-            <p>MARKAS BESAR</p>
-            <p>KEPOLISIAN NEGARA REPUBLIK INDONESIA</p>
-            <p>PUSAT KEDOKTERAN DAN KESEHATAN</p>
-          </div>
-
-        </header> */}
-
         <header className="skhpk-header">
-
           <div className="skhpk-header-text">
             <p>MARKAS BESAR</p>
             <p>KEPOLISIAN NEGARA REPUBLIK INDONESIA</p>
@@ -324,13 +313,13 @@ export default async function SkhpkPage({ params }: Params) {
               {ditujukan}
             </p>
 
-            <p>
+            {/* <p>
               di
             </p>
 
             <p>
               Jakarta
-            </p>
+            </p> */}
 
           </div>
 
@@ -353,18 +342,17 @@ export default async function SkhpkPage({ params }: Params) {
               KAROKESPOL
             </p>
 
-            {/* BARCODE */}
-            <div className="skhpk-barcode-box">
-
-              <Barcode
-                value={barcode}
-                className="skhpk-barcode"
+            {/* QR SPECIMEN TTD */}
+            <div className="skhpk-qr-box">
+              <QrCode
+                value={qrUrl}
+                className="skhpk-qr"
+                size={108}
               />
 
-              <p className="skhpk-barcode-caption">
-                Tanda tangan elektronik / barcode verifikasi SATRIA
-              </p>
-
+              {/* <p className="skhpk-qr-caption">
+                Pindai QR untuk specimen tanda tangan
+              </p> */}
             </div>
 
             {/* NAMA */}

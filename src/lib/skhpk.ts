@@ -3,8 +3,11 @@ import type { HasilRikkes, Peserta, Rikkes } from "./types";
 export const SKHPK_SIGNER = {
   atasNama: "a.n. KEPALA PUSAT KEDOKTERAN DAN KESEHATAN POLRI",
   jabatan: "KAROKESPOL",
-  nama: "Dr. dr. IG GEDE M. ANDIKA, Sp.Rad.",
-  pangkat: "BRIGADIR JENDERAL POLISI",
+  nama: "Dr. dr.MOHAMMAD KHUSNAN MARZUKI, M.M., M.H.",
+  pangkat: "KOMISARI BESAR POLISI",
+  nrp: "70090417",
+  jenisKelamin: "LAKI-LAKI",
+  status: "Aktif",
 };
 
 export const SKHPK_DASAR =
@@ -39,6 +42,16 @@ export function formatLongDateId(dateStr: string) {
   return d.toLocaleDateString("id-ID", {
     day: "numeric",
     month: "long",
+    year: "numeric",
+  });
+}
+
+export function formatShortDateId(dateStr: string) {
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return dateStr;
+  return d.toLocaleDateString("id-ID", {
+    day: "2-digit",
+    month: "2-digit",
     year: "numeric",
   });
 }
