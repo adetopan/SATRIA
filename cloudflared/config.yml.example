@@ -1,0 +1,15 @@
+# Cloudflare Tunnel untuk SATRIA
+# File ini diisi otomatis oleh scripts/setup-cloudflare-tunnel.ps1
+#
+# Ganti TUNNEL_ID dan path credentials setelah:
+#   cloudflared tunnel create satria
+
+tunnel: TUNNEL_ID
+credentials-file: C:\Users\USER\.cloudflared\TUNNEL_ID.json
+
+ingress:
+  - hostname: izinsatria.my.id
+    service: http://127.0.0.1:3000
+  - hostname: www.izinsatria.my.id
+    service: http://127.0.0.1:3000
+  - service: http_status:404

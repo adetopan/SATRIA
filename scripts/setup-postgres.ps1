@@ -47,6 +47,7 @@ $envFile = Join-Path (Split-Path $PSScriptRoot -Parent) ".env.local"
 @"
 DATABASE_URL=postgresql://${DbUser}:${encodedPass}@${DbHost}:${DbPort}/${DbName}
 SATRIA_SECRET=satria-dev-secret-change-me
+NEXT_PUBLIC_APP_URL=https://izinsatria.my.id
 "@ | Set-Content -Path $envFile -Encoding utf8
 
 Remove-Item Env:PGPASSWORD -ErrorAction SilentlyContinue

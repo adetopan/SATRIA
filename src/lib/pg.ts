@@ -13,9 +13,12 @@ function createPool() {
     );
   }
 
+  const isLocal = /localhost|127\.0\.0\.1/.test(connectionString);
+
   return new Pool({
     connectionString,
     max: 10,
+    ssl: isLocal ? undefined : { rejectUnauthorized: false },
   });
 }
 
