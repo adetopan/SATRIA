@@ -3,6 +3,7 @@ import { promises as fs } from "fs";
 import path from "path";
 import { requireSession } from "@/lib/auth";
 import { getPeserta, getRikkes, savePeserta, saveRikkes, uid } from "@/lib/db";
+import { ensureUploadDir, uploadDir } from "@/lib/uploads";
 import type { Rikkes } from "@/lib/types";
 
 export async function GET() {
@@ -80,10 +81,9 @@ export async function POST(request: Request) {
     const ext = path.extname(file.name) || ".bin";
     fileName = file.name;
     const stored = `${uid("mcu")}${ext}`;
-    const uploadDir = path.join(process.cwd(), "public", "uploads");
-    await fs.mkdir(uploadDir, { recursive: true });
+    await ensureUploadDir();
     const buffer = Buffer.from(await file.arrayBuffer());
-    await fs.writeFile(path.join(uploadDir, stored), buffer);
+    await fs.writeFile(path.join(uploadDir(), stored), buffer);
     filePath = `/uploads/${stored}`;
   }
 

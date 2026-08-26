@@ -1,13 +1,12 @@
 import { promises as fs } from "fs";
 import path from "path";
+import { ensureUploadDir } from "@/lib/uploads";
 import { query } from "./pg";
 import { buildBarcodeValue, buildNomorSkhpk } from "./skhpk";
 import type { IzinSenjata, Peserta, Rikkes, User } from "./types";
 
 async function ensureUploadsDir() {
-  await fs.mkdir(path.join(process.cwd(), "public", "uploads"), {
-    recursive: true,
-  });
+  await ensureUploadDir();
 }
 
 const defaultUsers: User[] = [
