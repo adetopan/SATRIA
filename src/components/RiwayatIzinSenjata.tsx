@@ -5,10 +5,10 @@ import { formatDate } from "@/lib/format";
 import { IzinBadge } from "@/components/StatusBadge";
 import { IzinStatusActions } from "@/components/IzinStatusActions";
 import { KirimWaButton } from "@/components/KirimWaButton";
-import type { Izin, Peserta, Rikkes } from "@/lib/types";
+import type { IzinSenjata, Peserta, Rikkes } from "@/lib/types";
 
 type Props = {
-  izin: Izin[];
+  izin: IzinSenjata[];
   peserta: Peserta[];
   rikkes: Rikkes[];
 };

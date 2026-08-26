@@ -1,26 +1,38 @@
-# Pasang SATRIA + Cloudflare Tunnel agar nyala otomatis saat Windows login.
-# Jalankan sekali di PC server (PowerShell sebagai Administrator disarankan):
+# Pasang SATRIA + Cloudflare Tunnel agar nyala otomatis saat user login.
+# Tidak perlu Administrator (pakai folder Startup).
 #   powershell -ExecutionPolicy Bypass -File .\scripts\install-satria-autostart.ps1
 
 $ErrorActionPreference = "Stop"
 $Root = Split-Path $PSScriptRoot -Parent
 $StartApp = Join-Path $PSScriptRoot "start-satria.ps1"
-$RunAll = Join-Path $PSScriptRoot "run-satria-tunnel.ps1"
+$RunTunnel = Join-Path $PSScriptRoot "run-satria-tunnel.ps1"
+$Startup = Join-Path $env:APPDATA "Microsoft\Windows\Start Menu\Programs\Startup"
+
+if (-not (Test-Path $StartApp)) { throw "Tidak ketemu: $StartApp" }
+if (-not (Test-Path $RunTunnel)) { throw "Tidak ketemu: $RunTunnel" }
+
+New-Item -ItemType Directory -Force -Path $Startup | Out-Null
 
 $ps = Join-Path $env:SystemRoot "System32\WindowsPowerShell\v1.0\powershell.exe"
-$appArgs = "-NoProfile -ExecutionPolicy Bypass -File `"$StartApp`""
-$tunnelArgs = "-NoProfile -ExecutionPolicy Bypass -File `"$RunAll`""
 
-Write-Host "==> Task SATRIA (Next.js)"
-schtasks /Create /TN "SATRIA App" /TR "`"$ps`" $appArgs" /SC ONLOGON /RL LIMITED /F | Out-Null
+$appCmd = Join-Path $Startup "SATRIA-App.cmd"
+$tunnelCmd = Join-Path $Startup "SATRIA-Tunnel.cmd"
 
-Write-Host "==> Task SATRIA Tunnel (cloudflared)"
-schtasks /Create /TN "SATRIA Tunnel" /TR "`"$ps`" $tunnelArgs" /SC ONLOGON /RL LIMITED /F | Out-Null
+@"
+@echo off
+start "SATRIA App" /min "$ps" -NoProfile -ExecutionPolicy Bypass -File "$StartApp"
+"@ | Set-Content -Path $appCmd -Encoding ascii
 
+@"
+@echo off
+start "SATRIA Tunnel" /min "$ps" -NoProfile -ExecutionPolicy Bypass -File "$RunTunnel"
+"@ | Set-Content -Path $tunnelCmd -Encoding ascii
+
+Write-Host "==> Autostart (folder Startup, tanpa admin)"
+Write-Host "  $appCmd"
+Write-Host "  $tunnelCmd"
 Write-Host ""
-Write-Host "Autostart terpasang (saat user login)."
-Write-Host "Agar PC server tidak perlu login manual, aktifkan auto-logon Windows."
-Write-Host ""
-Write-Host "Jalankan sekarang:"
-Write-Host "  schtasks /Run /TN `"SATRIA App`""
-Write-Host "  schtasks /Run /TN `"SATRIA Tunnel`""
+Write-Host "Akan jalan otomatis saat user ini login."
+Write-Host "Jalankan sekarang (dua jendela PowerShell):"
+Write-Host "  powershell -ExecutionPolicy Bypass -File `"$StartApp`""
+Write-Host "  powershell -ExecutionPolicy Bypass -File `"$RunTunnel`""

@@ -10,13 +10,7 @@ $TunnelName = "satria"
 $CfDir = Join-Path $env:USERPROFILE ".cloudflared"
 $ConfigPath = Join-Path $CfDir "config.yml"
 
-function Get-Cloudflared {
-  $cmd = Get-Command cloudflared -ErrorAction SilentlyContinue
-  if ($cmd) { return $cmd.Source }
-  $guess = Join-Path $env:ProgramFiles "cloudflared\cloudflared.exe"
-  if (Test-Path $guess) { return $guess }
-  return $null
-}
+. (Join-Path $PSScriptRoot "cloudflared-path.ps1")
 
 Write-Host "==> Cek cloudflared"
 $bin = Get-Cloudflared
@@ -103,8 +97,8 @@ Set-Content -Path $ConfigPath -Value $config -Encoding utf8
 Write-Host "==> Config ditulis ke $ConfigPath"
 
 Write-Host "==> Pasang DNS $Hostname -> tunnel"
-& $bin tunnel route dns --overwrite $TunnelName $Hostname
-& $bin tunnel route dns --overwrite $TunnelName "www.$Hostname"
+& $bin tunnel route dns --overwrite-dns $TunnelName $Hostname
+& $bin tunnel route dns --overwrite-dns $TunnelName "www.$Hostname"
 
 Write-Host ""
 Write-Host "Tunnel siap."

@@ -1,22 +1,18 @@
 # Tunggu SATRIA di port 3000, lalu jalankan Cloudflare Tunnel.
-# Dipakai task "SATRIA Tunnel".
 
 $ErrorActionPreference = "Stop"
 $TunnelName = "satria"
 
-function Get-Cloudflared {
-  $cmd = Get-Command cloudflared -ErrorAction SilentlyContinue
-  if ($cmd) { return $cmd.Source }
-  $guess = Join-Path $env:ProgramFiles "cloudflared\cloudflared.exe"
-  if (Test-Path $guess) { return $guess }
-  throw "cloudflared tidak ditemukan. Jalankan .\scripts\setup-cloudflare-tunnel.ps1"
-}
+. (Join-Path $PSScriptRoot "cloudflared-path.ps1")
 
 $bin = Get-Cloudflared
+if (-not $bin) {
+  throw "cloudflared.exe tidak ketemu. Install: winget install --id Cloudflare.cloudflared -e"
+}
 
 Write-Host "==> Menunggu SATRIA di 127.0.0.1:3000 ..."
 $ready = $false
-for ($i = 0; $i -lt 60; $i++) {
+for ($i = 0; $i -lt 90; $i++) {
   try {
     $client = New-Object System.Net.Sockets.TcpClient
     $client.Connect("127.0.0.1", 3000)
@@ -24,12 +20,18 @@ for ($i = 0; $i -lt 60; $i++) {
     $ready = $true
     break
   } catch {
+    $detik = $i * 2
+    Write-Host "  belum siap (${detik}s)"
     Start-Sleep -Seconds 2
   }
 }
 
 if (-not $ready) {
-  throw "SATRIA belum listen di port 3000. Pastikan task SATRIA App / start-satria.ps1 sudah jalan."
+  Write-Host ""
+  Write-Host "SATRIA belum listen di port 3000."
+  Write-Host "Jalankan dulu: .\scripts\start-satria.ps1"
+  Read-Host "Tekan Enter untuk menutup"
+  exit 1
 }
 
 Write-Host "==> cloudflared tunnel run $TunnelName"
