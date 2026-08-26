@@ -30,6 +30,7 @@ export async function POST(request: Request) {
   const pesertaId = String(form.get("pesertaId") || "");
   const nomorSurat = String(form.get("nomorSurat") || "").trim();
   const tanggalPemeriksaan = String(form.get("tanggalPemeriksaan") || "");
+  const noHp = String(form.get("noHp") || "").trim();
   const rumahSakit = String(form.get("rumahSakit") || "RS Bhayangkara / MCU RS Polri").trim();
   const dokter = String(form.get("dokter") || "").trim();
   const tekananDarah = String(form.get("tekananDarah") || "").trim();
@@ -40,9 +41,9 @@ export async function POST(request: Request) {
   const catatan = String(form.get("catatan") || "").trim();
   const file = form.get("file");
 
-  if (!pesertaId || !tanggalPemeriksaan) {
+  if (!pesertaId || !tanggalPemeriksaan || !noHp) {
     return NextResponse.json(
-      { error: "Data rikkes belum lengkap." },
+      { error: "Data rikkes belum lengkap. Peserta, tanggal pemeriksaan, dan No. HP wajib diisi." },
       { status: 400 },
     );
   }
@@ -115,6 +116,7 @@ export async function POST(request: Request) {
 
   pesertaList[pesertaIndex] = {
     ...pesertaList[pesertaIndex],
+    noHp: noHp || pesertaList[pesertaIndex].noHp,
     statusRikkes: "PENDING",
     updatedAt: new Date().toISOString(),
   };

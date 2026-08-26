@@ -193,7 +193,7 @@ export default async function TidakMemenuhiSyaratPage({
         >
           Untuk informasi lebih lanjut mengenai hasil
           pengajuan dan proses selanjutnya, silakan
-          menghubungi <strong>Bagian Samapta</strong>.
+          menghubungi <strong>Subbid Keslasus Bidkesmapta Rokespol Pusdokkes Polri</strong>.
         </div>
 
         {/* ===============================

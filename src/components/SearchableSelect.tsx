@@ -1,15 +1,27 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+
+export type SearchableOption = {
+  value: string;
+  label: string;
+};
 
 type SearchableSelectProps = {
   label: string;
   value: string;
-  options: string[];
+  options: string[] | SearchableOption[];
   placeholder?: string;
   required?: boolean;
+  full?: boolean;
   onChange: (value: string) => void;
 };
+
+function toItem(option: string | SearchableOption): SearchableOption {
+  return typeof option === "string"
+    ? { value: option, label: option }
+    : option;
+}
 
 export function SearchableSelect({
   label,
@@ -17,19 +29,23 @@ export function SearchableSelect({
   options,
   placeholder = "Ketik untuk mencari...",
   required = false,
+  full = false,
   onChange,
 }: SearchableSelectProps) {
-  const [search, setSearch] = useState(value);
+  const items = useMemo(() => options.map(toItem), [options]);
+  const selected = items.find((item) => item.value === value);
+
+  const [search, setSearch] = useState(selected?.label || "");
   const [open, setOpen] = useState(false);
 
   const wrapperRef = useRef<HTMLDivElement>(null);
 
-  // Sinkronkan jika value berubah dari luar
   useEffect(() => {
-    setSearch(value);
-  }, [value]);
+    if (!value) return;
+    const match = items.find((item) => item.value === value);
+    if (match) setSearch(match.label);
+  }, [value, items]);
 
-  // Tutup dropdown ketika klik di luar
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
@@ -37,6 +53,10 @@ export function SearchableSelect({
         !wrapperRef.current.contains(event.target as Node)
       ) {
         setOpen(false);
+        if (value) {
+          const match = items.find((item) => item.value === value);
+          if (match) setSearch(match.label);
+        }
       }
     }
 
@@ -45,21 +65,24 @@ export function SearchableSelect({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, []);
+  }, [value, items]);
 
-  const filteredOptions = options.filter((option) =>
-    option.toLowerCase().includes(search.toLowerCase())
-  );
+  const query = search.trim().toLowerCase();
+  const showAll = Boolean(selected && search === selected.label);
+  const filteredOptions = items.filter((item) => {
+    if (showAll || !query) return true;
+    return item.label.toLowerCase().includes(query);
+  });
 
-  function handleSelect(option: string) {
-    setSearch(option);
-    onChange(option);
+  function handleSelect(item: SearchableOption) {
+    setSearch(item.label);
+    onChange(item.value);
     setOpen(false);
   }
 
   return (
     <div
-      className="field"
+      className={`field${full ? " full" : ""}`}
       ref={wrapperRef}
       style={{ position: "relative" }}
     >
@@ -70,12 +93,11 @@ export function SearchableSelect({
         value={search}
         placeholder={placeholder}
         required={required}
+        autoComplete="off"
         onFocus={() => setOpen(true)}
         onChange={(e) => {
           setSearch(e.target.value);
           setOpen(true);
-
-          // Kosongkan value jika user mengetik ulang
           onChange("");
         }}
       />
@@ -106,26 +128,29 @@ export function SearchableSelect({
               Data tidak ditemukan
             </div>
           ) : (
-            filteredOptions.map((option) => (
+            filteredOptions.map((item) => (
               <div
-                key={option}
+                key={item.value}
                 onMouseDown={(e) => {
                   e.preventDefault();
-                  handleSelect(option);
+                  handleSelect(item);
                 }}
                 style={{
                   padding: "10px 12px",
                   cursor: "pointer",
                   borderBottom: "1px solid #eee",
+                  background:
+                    item.value === value ? "var(--satria-green-soft)" : "#fff",
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = "#f1f5f9";
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "#fff";
+                  e.currentTarget.style.background =
+                    item.value === value ? "var(--satria-green-soft)" : "#fff";
                 }}
               >
-                {option}
+                {item.label}
               </div>
             ))
           )}

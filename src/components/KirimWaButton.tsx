@@ -95,6 +95,7 @@ export function KirimWaButton({
         `Surat Keterangan Hasil Pemeriksaan Kesehatan (SKHPK) ` +
         `dapat dilihat melalui tautan berikut:\n\n` +
         `${linkHalaman}\n\n` +
+        `Untuk membuka cetakan, gunakan NRP Anda sebagai kata sandi.\n\n` +
         `Demikian disampaikan. Terima kasih.`;
     }
 
@@ -106,7 +107,7 @@ export function KirimWaButton({
         `kami informasikan bahwa pengajuan Anda dinyatakan ` +
         `TIDAK MEMENUHI SYARAT.\n\n` +
         `Untuk informasi lebih lanjut, silakan menghubungi ` +
-        `bagian Samapta.\n\n` +
+        `Subbid Keslasus Bidkesmapta Rokespol Pusdokkes Polri.\n\n` +
         // `Informasi selengkapnya dapat dilihat melalui tautan berikut:\n\n` +
         // `${linkHalaman}\n\n` +
         `Demikian disampaikan. Terima kasih.`;

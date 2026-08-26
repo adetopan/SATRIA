@@ -325,23 +325,6 @@ export function PesertaForm({
         </div>
 
         {/* =============================== */}
-        {/* NO HP */}
-        {/* =============================== */}
-
-        <div className="field">
-          <label>No. HP</label>
-
-          <input
-            type="tel"
-            value={form.noHp}
-            onChange={(e) =>
-              set("noHp", e.target.value)
-            }
-            placeholder="08xxxxxxxxxx"
-          />
-        </div>
-
-        {/* =============================== */}
         {/* KEPERLUAN */}
         {/* =============================== */}
 

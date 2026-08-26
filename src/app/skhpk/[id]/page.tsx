@@ -1,11 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { PrintButton } from "@/components/PrintButton";
 import { QrCode } from "@/components/QrCode";
+import { SkhpkUnlockForm } from "@/components/SkhpkUnlockForm";
 import { getAppOrigin } from "@/lib/app-url";
 import { getSession } from "@/lib/auth";
 import { getPeserta, getRikkes } from "@/lib/db";
+import { hasSkhpkAccess } from "@/lib/skhpk-access";
 import {
   SKHPK_DASAR,
   SKHPK_SIGNER,
@@ -18,23 +20,21 @@ import "./skhpk.css";
 type Params = { params: Promise<{ id: string }> };
 
 export default async function SkhpkPage({ params }: Params) {
-  const session = await getSession();
-
-  if (!session) {
-    redirect("/login");
-  }
-
   const { id } = await params;
-
-  const [rikkesList, pesertaList] = await Promise.all([
+  const [session, rikkesList, pesertaList] = await Promise.all([
+    getSession(),
     getRikkes(),
     getPeserta(),
   ]);
 
   const rikkes = rikkesList.find((r) => r.id === id);
-
   if (!rikkes) {
     notFound();
+  }
+
+  const unlocked = session ? true : await hasSkhpkAccess(id);
+  if (!unlocked) {
+    return <SkhpkUnlockForm rikkesId={id} />;
   }
 
   const peserta = pesertaList.find((p) => p.id === rikkes.pesertaId);
@@ -51,9 +51,11 @@ export default async function SkhpkPage({ params }: Params) {
           (Layak / Memenuhi Syarat).
         </p>
 
-        <Link href={`/peserta/${peserta.id}`}>
-          Kembali ke data peserta
-        </Link>
+        {session ? (
+          <Link href={`/peserta/${peserta.id}`}>
+            Kembali ke data peserta
+          </Link>
+        ) : null}
       </div>
     );
   }
@@ -86,17 +88,21 @@ export default async function SkhpkPage({ params }: Params) {
           </h1>
 
           <p>
-            TTD diganti QR code specimen tanda tangan.
+            {session
+              ? "TTD diganti QR code specimen tanda tangan."
+              : "Gunakan tombol Cetak untuk menyimpan atau mencetak surat."}
           </p>
         </div>
 
         <div className="actions">
-          <Link
-            href={`/peserta/${peserta.id}`}
-            className="btn-secondary"
-          >
-            Kembali
-          </Link>
+          {session ? (
+            <Link
+              href={`/peserta/${peserta.id}`}
+              className="btn-secondary"
+            >
+              Kembali
+            </Link>
+          ) : null}
 
           <PrintButton />
         </div>

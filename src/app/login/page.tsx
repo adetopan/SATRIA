@@ -83,13 +83,13 @@ export default function LoginPage() {
           {loading ? "Memproses..." : "Masuk ke SATRIA"}
         </button>
 
-        <div className="hint-box">
+        {/* <div className="hint-box">
           <strong>Akun demo:</strong>
           <br />
           Admin — <code>admin / admin123</code>
           <br />
           MCU RS Polri — <code>mcu / mcu123</code>
-        </div>
+        </div> */}
       </form>
     </div>
   );

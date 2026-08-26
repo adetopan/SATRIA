@@ -18,9 +18,6 @@ export const metadata: Metadata = {
   title: "SATRIA — Sistem Administrasi Terintegrasi Rikkes & Izin Senjata Api",
   description:
     "Aplikasi administrasi terintegrasi untuk hasil rikkes MCU RS Polri dan izin senjata api.",
-  icons: {
-    icon: "/logo-satria.png",
-  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

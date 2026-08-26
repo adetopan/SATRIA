@@ -3,26 +3,33 @@
 import { FormEvent, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Peserta } from "@/lib/types";
+import { SearchableSelect } from "@/components/SearchableSelect";
 
 export function UploadMcuForm({ peserta }: { peserta: Peserta[] }) {
   const router = useRouter();
 
-  const [pesertaId, setPesertaId] = useState(
-    peserta[0]?.id || ""
-  );
-
+  const [pesertaId, setPesertaId] = useState("");
+  const [noHp, setNoHp] = useState("");
   const [tanggalPemeriksaan, setTanggalPemeriksaan] = useState("");
-
   const [file, setFile] = useState<File | null>(null);
-
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const selected = useMemo(
-    () => peserta.find((p) => p.id === pesertaId),
-    [peserta, pesertaId]
+  const pesertaOptions = useMemo(
+    () =>
+      peserta.map((p) => ({
+        value: p.id,
+        label: `${p.nama} — NRP ${p.nrp} (${p.pangkat})`,
+      })),
+    [peserta]
   );
+
+  function handlePesertaChange(id: string) {
+    setPesertaId(id);
+    const next = peserta.find((p) => p.id === id);
+    setNoHp(next?.noHp || "");
+  }
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -34,6 +41,12 @@ export function UploadMcuForm({ peserta }: { peserta: Peserta[] }) {
     // Validasi peserta
     if (!pesertaId) {
       setError("Silakan pilih peserta.");
+      setLoading(false);
+      return;
+    }
+
+    if (!noHp) {
+      setError("No. HP wajib diisi.");
       setLoading(false);
       return;
     }
@@ -57,6 +70,7 @@ export function UploadMcuForm({ peserta }: { peserta: Peserta[] }) {
     // Hanya data dari form yang dikirim
     form.set("pesertaId", pesertaId);
     form.set("tanggalPemeriksaan", tanggalPemeriksaan);
+    form.set("noHp", noHp);
     form.set("file", file);
 
     try {
@@ -147,46 +161,32 @@ export function UploadMcuForm({ peserta }: { peserta: Peserta[] }) {
         {/* =====================================
             1. PILIH PESERTA
         ====================================== */}
-        <div className="field full">
+        <SearchableSelect
+          label="Pilih Peserta"
+          value={pesertaId}
+          options={pesertaOptions}
+          placeholder="Ketik nama atau NRP..."
+          required
+          full
+          onChange={handlePesertaChange}
+        />
 
-          <label>Pilih Peserta</label>
-
-          <select
-            value={pesertaId}
-            onChange={(e) =>
-              setPesertaId(e.target.value)
-            }
+        {/* =====================================
+            2. NO HP
+        ====================================== */}
+        <div className="field">
+          <label>No. HP</label>
+          <input
+            type="tel"
+            value={noHp}
+            onChange={(e) => setNoHp(e.target.value)}
+            placeholder="08xxxxxxxxxx"
             required
-          >
-
-            {peserta.map((p) => (
-              <option
-                key={p.id}
-                value={p.id}
-              >
-                {p.nama} — NRP {p.nrp} ({p.pangkat})
-              </option>
-            ))}
-
-          </select>
-{/* 
-          {selected ? (
-            <small
-              style={{
-                color: "var(--satria-muted)",
-              }}
-            >
-              Satuan: {selected.satuan}
-              {" · "}
-              Status rikkes saat ini:{" "}
-              {selected.statusRikkes}
-            </small>
-          ) : null} */}
-
+          />
         </div>
 
         {/* =====================================
-            2. TANGGAL PEMERIKSAAN
+            3. TANGGAL PEMERIKSAAN
         ====================================== */}
         <div className="field">
 
@@ -208,7 +208,7 @@ export function UploadMcuForm({ peserta }: { peserta: Peserta[] }) {
         </div>
 
         {/* =====================================
-            3. FILE HASIL MCU
+            4. FILE HASIL MCU
         ====================================== */}
         <div className="field full">
 
