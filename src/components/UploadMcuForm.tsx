@@ -1,12 +1,29 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { Peserta } from "@/lib/types";
+import type { Peserta, Rikkes } from "@/lib/types";
 import { SearchableSelect } from "@/components/SearchableSelect";
+import {
+  duplicateMcuDateMessage,
+  findDuplicateMcuDate,
+} from "@/lib/format";
 
-export function UploadMcuForm({ peserta }: { peserta: Peserta[] }) {
+type Props = {
+  peserta: Peserta[];
+  rikkes: Rikkes[];
+  editing: Rikkes | null;
+  onCancelEdit: () => void;
+};
+
+export function UploadMcuForm({
+  peserta,
+  rikkes,
+  editing,
+  onCancelEdit,
+}: Props) {
   const router = useRouter();
+  const formRef = useRef<HTMLFormElement>(null);
 
   const [pesertaId, setPesertaId] = useState("");
   const [noHp, setNoHp] = useState("");
@@ -25,10 +42,47 @@ export function UploadMcuForm({ peserta }: { peserta: Peserta[] }) {
     [peserta]
   );
 
+  const duplicateTanggal = useMemo(
+    () =>
+      findDuplicateMcuDate(
+        rikkes,
+        pesertaId,
+        tanggalPemeriksaan,
+        editing?.id,
+      ),
+    [rikkes, pesertaId, tanggalPemeriksaan, editing?.id],
+  );
+
+  useEffect(() => {
+    if (!editing) return;
+    const next = peserta.find((p) => p.id === editing.pesertaId);
+    setPesertaId(editing.pesertaId);
+    setNoHp(next?.noHp || "");
+    setTanggalPemeriksaan(editing.tanggalPemeriksaan);
+    setFile(null);
+    setError("");
+    setSuccess("");
+    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [editing, peserta]);
+
+  function resetForm() {
+    setPesertaId("");
+    setNoHp("");
+    setTanggalPemeriksaan("");
+    setFile(null);
+  }
+
   function handlePesertaChange(id: string) {
     setPesertaId(id);
     const next = peserta.find((p) => p.id === id);
     setNoHp(next?.noHp || "");
+  }
+
+  function handleCancelEdit() {
+    resetForm();
+    setError("");
+    setSuccess("");
+    onCancelEdit();
   }
 
   async function onSubmit(e: FormEvent) {
@@ -38,7 +92,6 @@ export function UploadMcuForm({ peserta }: { peserta: Peserta[] }) {
     setError("");
     setSuccess("");
 
-    // Validasi peserta
     if (!pesertaId) {
       setError("Silakan pilih peserta.");
       setLoading(false);
@@ -51,60 +104,56 @@ export function UploadMcuForm({ peserta }: { peserta: Peserta[] }) {
       return;
     }
 
-    // Validasi tanggal
     if (!tanggalPemeriksaan) {
       setError("Tanggal pemeriksaan wajib diisi.");
       setLoading(false);
       return;
     }
 
-    // Validasi file
-    if (!file) {
+    if (findDuplicateMcuDate(rikkes, pesertaId, tanggalPemeriksaan, editing?.id)) {
+      setError(duplicateMcuDateMessage(tanggalPemeriksaan));
+      setLoading(false);
+      return;
+    }
+
+    if (!editing && !file) {
       setError("Berkas hasil MCU wajib dipilih.");
       setLoading(false);
       return;
     }
 
     const form = new FormData();
-
-    // Hanya data dari form yang dikirim
     form.set("pesertaId", pesertaId);
     form.set("tanggalPemeriksaan", tanggalPemeriksaan);
     form.set("noHp", noHp);
-    form.set("file", file);
+    if (file) form.set("file", file);
 
     try {
-      const res = await fetch("/api/rikkes", {
-        method: "POST",
-        body: form,
-      });
+      const res = await fetch(
+        editing ? `/api/rikkes/${editing.id}` : "/api/rikkes",
+        {
+          method: editing ? "PUT" : "POST",
+          body: form,
+        }
+      );
 
       const data = await res.json();
 
       if (!res.ok) {
-        setError(
-          data.error || "Gagal mengunggah hasil MCU."
-        );
+        setError(data.error || "Gagal menyimpan hasil MCU.");
         return;
       }
 
       setSuccess(
-        "Hasil rikkes berhasil diunggah ke SATRIA."
+        editing
+          ? "Data MCU berhasil diperbarui."
+          : "Hasil rikkes berhasil diunggah ke SATRIA."
       );
-
-      // Reset tanggal
-      setTanggalPemeriksaan("");
-
-      // Reset file
-      setFile(null);
-
-      // Refresh halaman
+      resetForm();
+      onCancelEdit();
       router.refresh();
-
-    } catch (error) {
-      setError(
-        "Terjadi kesalahan saat mengunggah hasil MCU."
-      );
+    } catch {
+      setError("Terjadi kesalahan saat menyimpan hasil MCU.");
     } finally {
       setLoading(false);
     }
@@ -122,45 +171,29 @@ export function UploadMcuForm({ peserta }: { peserta: Peserta[] }) {
   }
 
   return (
-    <form
-      className="panel"
-      onSubmit={onSubmit}
-    >
-
-      {/* HEADER */}
+    <form className="panel" onSubmit={onSubmit} ref={formRef}>
       <div className="panel-head">
         <div>
-          <h2>Upload Hasil Rikkes MCU</h2>
-
+          <h2>
+            {editing ? "Edit Hasil Rikkes MCU" : "Upload Hasil Rikkes MCU"}
+          </h2>
           <p>
-            Akses khusus MCU RS Polri untuk mengunggah
-            hasil pemeriksaan peserta ke aplikasi SATRIA.
+            {editing
+              ? "Ubah data pemeriksaan, lalu simpan kembali. Berkas cukup diisi jika ingin diganti."
+              : "Akses khusus MCU RS Polri untuk mengunggah hasil pemeriksaan peserta ke aplikasi SATRIA."}
           </p>
         </div>
       </div>
 
-      {/* ERROR */}
-      {error ? (
-        <p className="error-text">
-          {error}
-        </p>
-      ) : null}
+      {error ? <p className="error-text">{error}</p> : null}
 
-      {/* SUCCESS */}
       {success ? (
-        <p
-          className="hint-box"
-          style={{ marginTop: 0 }}
-        >
+        <p className="hint-box" style={{ marginTop: 0 }}>
           {success}
         </p>
       ) : null}
 
       <div className="form-grid">
-
-        {/* =====================================
-            1. PILIH PESERTA
-        ====================================== */}
         <SearchableSelect
           label="Pilih Peserta"
           value={pesertaId}
@@ -171,9 +204,6 @@ export function UploadMcuForm({ peserta }: { peserta: Peserta[] }) {
           onChange={handlePesertaChange}
         />
 
-        {/* =====================================
-            2. NO HP
-        ====================================== */}
         <div className="field">
           <label>No. HP</label>
           <input
@@ -185,81 +215,74 @@ export function UploadMcuForm({ peserta }: { peserta: Peserta[] }) {
           />
         </div>
 
-        {/* =====================================
-            3. TANGGAL PEMERIKSAAN
-        ====================================== */}
         <div className="field">
-
-          <label>
-            Tanggal Pemeriksaan
-          </label>
-
+          <label>Tanggal Pemeriksaan</label>
           <input
             type="date"
             value={tanggalPemeriksaan}
-            onChange={(e) =>
-              setTanggalPemeriksaan(
-                e.target.value
-              )
-            }
+            onChange={(e) => setTanggalPemeriksaan(e.target.value)}
             required
+            aria-invalid={Boolean(duplicateTanggal)}
           />
-
-        </div>
-
-        {/* =====================================
-            4. FILE HASIL MCU
-        ====================================== */}
-        <div className="field full">
-
-          <label>
-            Berkas Hasil MCU (PDF/JPG/PNG)
-          </label>
-
-          <input
-            type="file"
-            accept=".pdf,image/jpeg,image/png,image/webp"
-            onChange={(e) => {
-              setFile(
-                e.target.files?.[0] || null
-              );
-            }}
-            required
-          />
-
-          {file ? (
-            <small
-              style={{
-                color: "var(--satria-muted)",
-              }}
-            >
-              File dipilih: {file.name}
+          {duplicateTanggal ? (
+            <small className="error-text" style={{ display: "block" }}>
+              {duplicateMcuDateMessage(tanggalPemeriksaan)}
             </small>
           ) : null}
-
         </div>
 
+        <div className="field full">
+          <label>
+            {editing
+              ? "Berkas Hasil MCU (kosongkan jika tidak diganti)"
+              : "Berkas Hasil MCU (PDF/JPG/PNG)"}
+          </label>
+          <input
+            key={editing?.id || "create"}
+            type="file"
+            accept=".pdf,image/jpeg,image/png,image/webp"
+            required={!editing}
+            onChange={(e) => {
+              setFile(e.target.files?.[0] || null);
+            }}
+          />
+          {file ? (
+            <small style={{ color: "var(--satria-muted)" }}>
+              File dipilih: {file.name}
+            </small>
+          ) : editing?.fileName ? (
+            <small style={{ color: "var(--satria-muted)" }}>
+              Berkas saat ini: {editing.fileName}
+            </small>
+          ) : null}
+        </div>
       </div>
 
-      {/* BUTTON */}
-      <div
-        className="actions"
-        style={{ marginTop: "1rem" }}
-      >
-
+      <div className="actions" style={{ marginTop: "1rem" }}>
         <button
           type="submit"
           className="btn-primary"
           style={{ width: "auto" }}
-          disabled={loading}
+          disabled={loading || Boolean(duplicateTanggal)}
         >
           {loading
-            ? "Mengunggah..."
-            : "Unggah ke SATRIA"}
+            ? "Menyimpan..."
+            : editing
+              ? "Simpan Perubahan"
+              : "Unggah ke SATRIA"}
         </button>
-
+        {editing ? (
+          <button
+            type="button"
+            className="btn-secondary"
+            style={{ width: "auto" }}
+            onClick={handleCancelEdit}
+            disabled={loading}
+          >
+            Batal
+          </button>
+        ) : null}
       </div>
-
     </form>
   );
 }

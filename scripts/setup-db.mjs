@@ -53,6 +53,7 @@ async function main() {
     await client.query(
       `INSERT INTO users (id, username, password, name, role, unit) VALUES
        ('u-admin','admin','admin123','Administrator SATRIA','admin','Pusdokkes Polri'),
+       ('u-superadmin','superadmin','superadmin123','Superadmin SATRIA','superadmin','Pusdokkes Polri'),
        ('u-mcu','mcu','mcu123','Petugas MCU RS Polri','mcu','RS Bhayangkara / MCU RS Polri')`,
     );
 
@@ -83,10 +84,10 @@ async function main() {
     await client.query(
       `INSERT INTO izin_senjata (
          id, peserta_id, nomor_permohonan, jenis_senjata, keperluan, tanggal_pengajuan,
-         status, catatan, rikkes_id, created_at, updated_at
+         status, catatan, rikkes_id, ditujukan_kepada, created_at, updated_at
        ) VALUES
-       ('i-001','p-003','ISA/PMJ/112/2026','Pistol Dinas','Pengamanan tugas operasional','2026-08-01','VERIFIKASI','Menunggu hasil rikkes terbaru dari MCU.',NULL,$1,$1),
-       ('i-002','p-004','ISA/SSDM/082/2026','Pistol Dinas','Surat Izin Pinjam Pakai Senjata Api','2026-07-28','DISETUJUI','SKHPK telah diterbitkan.','r-002',$1,$1)`,
+       ('i-001','p-003','ISA/PMJ/112/2026','Pistol Dinas','Pengamanan tugas operasional','2026-08-01','VERIFIKASI','Menunggu hasil rikkes terbaru dari MCU.',NULL,'',$1,$1),
+       ('i-002','p-004','ISA/SSDM/082/2026','Pistol Dinas','Surat Izin Pinjam Pakai Senjata Api','2026-07-28','DISETUJUI','SKHPK telah diterbitkan.','r-002','As SDM Kapolri',$1,$1)`,
       [now],
     );
 

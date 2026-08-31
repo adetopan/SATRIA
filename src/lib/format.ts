@@ -9,6 +9,70 @@ export function formatDate(value?: string) {
   });
 }
 
+export function formatDateTime(value?: string) {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString("id-ID", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Asia/Jakarta",
+  });
+}
+
+export function examDay(value?: string) {
+  return (value || "").slice(0, 10);
+}
+
+export function findDuplicateMcuDate<
+  T extends { id: string; pesertaId: string; tanggalPemeriksaan: string },
+>(
+  list: T[],
+  pesertaId: string,
+  tanggalPemeriksaan: string,
+  excludeId?: string,
+) {
+  const day = examDay(tanggalPemeriksaan);
+  if (!pesertaId || !day) return undefined;
+
+  return list.find(
+    (item) =>
+      item.id !== excludeId &&
+      item.pesertaId === pesertaId &&
+      examDay(item.tanggalPemeriksaan) === day,
+  );
+}
+
+export function duplicateMcuDateMessage(tanggalPemeriksaan: string) {
+  return `Peserta ini sudah memiliki hasil MCU pada ${formatDate(tanggalPemeriksaan)}. Tidak dapat menginput tanggal pemeriksaan yang sama.`;
+}
+
+export function normalizeNrp(nrp: string) {
+  return nrp.replace(/\s+/g, "").trim();
+}
+
+export function isValidNrp(nrp: string) {
+  return /^\d{8}$/.test(normalizeNrp(nrp));
+}
+
+export function findPesertaByNrp<T extends { id: string; nrp: string }>(
+  nrp: string,
+  list: T[],
+  excludeId?: string,
+) {
+  const normalized = normalizeNrp(nrp).toLowerCase();
+  if (!normalized) return undefined;
+
+  return list.find(
+    (p) =>
+      p.id !== excludeId &&
+      normalizeNrp(p.nrp).toLowerCase() === normalized,
+  );
+}
+
 export function labelKeperluan(value: string) {
   switch (value) {
     case "IZIN_SENJATA":

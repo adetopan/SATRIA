@@ -1,57 +1,24 @@
 import { redirect } from "next/navigation";
 
 import { getSession } from "@/lib/auth";
-import {
-  getIzin,
-  getPeserta,
-  getRikkes,
-} from "@/lib/db";
-
-import { IzinForm } from "@/components/IzinForm";
-import { RiwayatIzinSenjata } from "@/components/RiwayatIzinSenjata";
+import { isStaffAdmin } from "@/lib/roles";
+import { getIzin, getPeserta, getRikkes } from "@/lib/db";
+import { IzinSenjataSection } from "@/components/IzinSenjataSection";
 
 export default async function IzinSenjataPage() {
-  const session =
-    await getSession();
+  const session = await getSession();
 
-  if (
-    !session ||
-    session.role !== "admin"
-  ) {
+  if (!session || !isStaffAdmin(session.role)) {
     redirect("/dashboard");
   }
 
-  const [
-    izin,
-    peserta,
-    rikkes,
-  ] = await Promise.all([
+  const [izin, peserta, rikkes] = await Promise.all([
     getIzin(),
     getPeserta(),
     getRikkes(),
   ]);
 
   return (
-    <div>
-
-      {/* =====================================
-          FORM PENGAJUAN
-      ====================================== */}
-
-      <IzinForm
-        peserta={peserta}
-      />
-
-      {/* =====================================
-          RIWAYAT / DAFTAR IZIN
-      ====================================== */}
-
-      <RiwayatIzinSenjata
-        izin={izin}
-        peserta={peserta}
-        rikkes={rikkes}
-      />
-
-    </div>
+    <IzinSenjataSection izin={izin} peserta={peserta} rikkes={rikkes} />
   );
 }

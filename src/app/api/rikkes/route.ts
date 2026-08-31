@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
-import { promises as fs } from "fs";
-import path from "path";
 import { requireSession } from "@/lib/auth";
+import { MCU_STAFF_ROLES } from "@/lib/roles";
 import { getPeserta, getRikkes, savePeserta, saveRikkes, uid } from "@/lib/db";
-import { ensureUploadDir, uploadDir } from "@/lib/uploads";
+import { recordActivity } from "@/lib/activity-log";
+import { pesertaActivityLabel } from "@/lib/activity-labels";
+import { formatDate } from "@/lib/format";
+import { mcuFileError, saveMcuFile } from "@/lib/mcu-file";
+import { duplicateMcuDateMessage, findDuplicateMcuDate } from "@/lib/format";
 import type { Rikkes } from "@/lib/types";
 
 export async function GET() {
@@ -22,7 +25,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const session = await requireSession(["admin", "mcu"]);
+  const session = await requireSession(MCU_STAFF_ROLES);
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -55,40 +58,28 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Peserta tidak ditemukan" }, { status: 404 });
   }
 
+  // MCU hanya mengunggah data pemeriksaan; kelayakan ditentukan di Izin Senjata Api.
+  const rikkes = await getRikkes();
+
+  if (findDuplicateMcuDate(rikkes, pesertaId, tanggalPemeriksaan)) {
+    return NextResponse.json(
+      { error: duplicateMcuDateMessage(tanggalPemeriksaan) },
+      { status: 409 },
+    );
+  }
+
   let fileName = "";
   let filePath = "";
 
   if (file && file instanceof File && file.size > 0) {
-    const allowed = [
-      "application/pdf",
-      "image/jpeg",
-      "image/png",
-      "image/webp",
-    ];
-    if (!allowed.includes(file.type)) {
-      return NextResponse.json(
-        { error: "File harus PDF atau gambar (JPG/PNG/WEBP)." },
-        { status: 400 },
-      );
+    const fileError = mcuFileError(file);
+    if (fileError) {
+      return NextResponse.json({ error: fileError }, { status: 400 });
     }
-    if (file.size > 8 * 1024 * 1024) {
-      return NextResponse.json(
-        { error: "Ukuran file maksimal 8 MB." },
-        { status: 400 },
-      );
-    }
-
-    const ext = path.extname(file.name) || ".bin";
-    fileName = file.name;
-    const stored = `${uid("mcu")}${ext}`;
-    await ensureUploadDir();
-    const buffer = Buffer.from(await file.arrayBuffer());
-    await fs.writeFile(path.join(uploadDir(), stored), buffer);
-    filePath = `/uploads/${stored}`;
+    const stored = await saveMcuFile(file);
+    fileName = stored.fileName;
+    filePath = stored.filePath;
   }
-
-  // MCU hanya mengunggah data pemeriksaan; kelayakan ditentukan di Izin Senjata Api.
-  const rikkes = await getRikkes();
 
   const record: Rikkes = {
     id: uid("r"),
@@ -121,6 +112,15 @@ export async function POST(request: Request) {
     updatedAt: new Date().toISOString(),
   };
   await savePeserta(pesertaList);
+
+  const p = pesertaList[pesertaIndex];
+  await recordActivity(session, {
+    action: "MCU_UPLOAD",
+    module: "MCU",
+    targetId: record.id,
+    targetLabel: pesertaActivityLabel(p),
+    detail: `Tanggal pemeriksaan ${formatDate(tanggalPemeriksaan)}${fileName ? ` · Berkas ${fileName}` : ""}`,
+  });
 
   return NextResponse.json({ data: record }, { status: 201 });
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { formatDate } from "@/lib/format";
 import { IzinBadge } from "@/components/StatusBadge";
 import { IzinStatusActions } from "@/components/IzinStatusActions";
@@ -11,12 +12,51 @@ type Props = {
   izin: IzinSenjata[];
   peserta: Peserta[];
   rikkes: Rikkes[];
+  editingId?: string;
+  onEdit: (izin: IzinSenjata) => void;
+  onCancelEdit: () => void;
 };
+
+function IconEdit() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M4 20h4.5L19.2 9.3a1.5 1.5 0 0 0 0-2.1L16.8 4.8a1.5 1.5 0 0 0-2.1 0L6 14.5V20Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M13.5 6.5 17.5 10.5"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function IconTrash() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M5 7h14M10 11v6M14 11v6M9 7l1-2h4l1 2M7 7l1 13h8l1-13"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
 
 export function RiwayatIzinSenjata({
   izin,
   peserta,
   rikkes,
+  editingId,
+  onEdit,
+  onCancelEdit,
 }: Props) {
   // ==========================================
   // FILTER
@@ -26,6 +66,10 @@ export function RiwayatIzinSenjata({
   const [tanggalDari, setTanggalDari] = useState("");
   const [tanggalSampai, setTanggalSampai] = useState("");
   const [status, setStatus] = useState("");
+  const [pendingDelete, setPendingDelete] = useState<IzinSenjata | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+  const router = useRouter();
 
   // ==========================================
   // PAGINATION
@@ -139,6 +183,31 @@ export function RiwayatIzinSenjata({
     setTanggalSampai("");
     setStatus("");
     setCurrentPage(1);
+  }
+
+  async function confirmDelete() {
+    if (!pendingDelete) return;
+    setDeleting(true);
+    setDeleteError("");
+    try {
+      const res = await fetch(`/api/izin/${pendingDelete.id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setDeleteError(data.error || "Gagal menghapus data izin.");
+        return;
+      }
+      if (editingId === pendingDelete.id) {
+        onCancelEdit();
+      }
+      setPendingDelete(null);
+      router.refresh();
+    } catch {
+      setDeleteError("Terjadi kesalahan saat menghapus data izin.");
+    } finally {
+      setDeleting(false);
+    }
   }
 
   // ==========================================
@@ -411,6 +480,10 @@ export function RiwayatIzinSenjata({
                 </th>
 
                 <th>
+                  Edit / Hapus
+                </th>
+
+                <th>
                   Kirim WA
                 </th>
               </tr>
@@ -440,7 +513,12 @@ export function RiwayatIzinSenjata({
                   );
 
                 return (
-                  <tr key={i.id}>
+                  <tr
+                    key={i.id}
+                    className={
+                      editingId === i.id ? "row-editing" : undefined
+                    }
+                  >
                     {/* NOMOR */}
                     <td>
                       {i.nomorPermohonan}
@@ -546,6 +624,33 @@ export function RiwayatIzinSenjata({
                       />
                     </td>
 
+                    {/* EDIT / HAPUS */}
+                    <td>
+                      <div className="actions">
+                        <button
+                          type="button"
+                          className="icon-btn"
+                          title="Edit"
+                          aria-label={`Edit izin ${p?.nama || ""}`}
+                          onClick={() => onEdit(i)}
+                        >
+                          <IconEdit />
+                        </button>
+                        <button
+                          type="button"
+                          className="icon-btn icon-btn-danger"
+                          title="Hapus"
+                          aria-label={`Hapus izin ${p?.nama || ""}`}
+                          onClick={() => {
+                            setDeleteError("");
+                            setPendingDelete(i);
+                          }}
+                        >
+                          <IconTrash />
+                        </button>
+                      </div>
+                    </td>
+
                     {/* KIRIM WA */}
                     <td>
                       <KirimWaButton
@@ -649,6 +754,62 @@ export function RiwayatIzinSenjata({
           </button>
         </div>
       )}
+
+      {pendingDelete ? (
+        <div
+          className="confirm-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="hapus-izin-title"
+          onClick={() => {
+            if (deleting) return;
+            setPendingDelete(null);
+            setDeleteError("");
+          }}
+        >
+          <div
+            className="confirm-card"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 id="hapus-izin-title">Hapus data izin?</h3>
+            <p>
+              Data izin{" "}
+              <strong>
+                {peserta.find((p) => p.id === pendingDelete.pesertaId)
+                  ?.nama || "peserta ini"}
+              </strong>{" "}
+              akan dihapus. Tindakan ini tidak dapat dibatalkan.
+            </p>
+            {deleteError ? (
+              <p className="error-text">{deleteError}</p>
+            ) : null}
+            <div className="actions">
+              <button
+                type="button"
+                className="btn-secondary"
+                style={{ width: "auto" }}
+                onClick={() => {
+                  if (deleting) return;
+                  setPendingDelete(null);
+                  setDeleteError("");
+                }}
+                disabled={deleting}
+              >
+                Tidak
+              </button>
+              <button
+                type="button"
+                className="btn-danger"
+                style={{ width: "auto" }}
+                onClick={confirmDelete}
+                disabled={deleting}
+              >
+                {deleting ? "Menghapus..." : "Ya"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

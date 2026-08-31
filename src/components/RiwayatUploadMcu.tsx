@@ -1,24 +1,68 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { formatDate } from "@/lib/format";
 import type { Peserta, Rikkes } from "@/lib/types";
 
 type Props = {
   peserta: Peserta[];
   rikkes: Rikkes[];
+  editingId?: string;
+  onEdit: (rikkes: Rikkes) => void;
+  onCancelEdit: () => void;
 };
+
+function IconEdit() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M4 20h4.5L19.2 9.3a1.5 1.5 0 0 0 0-2.1L16.8 4.8a1.5 1.5 0 0 0-2.1 0L6 14.5V20Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M13.5 6.5 17.5 10.5"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function IconTrash() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M5 7h14M10 11v6M14 11v6M9 7l1-2h4l1 2M7 7l1 13h8l1-13"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
 
 export function RiwayatUploadMcu({
   peserta,
   rikkes,
+  editingId,
+  onEdit,
+  onCancelEdit,
 }: Props) {
   // ==========================================
   // STATE FILTER
   // ==========================================
+  const router = useRouter();
   const [searchPeserta, setSearchPeserta] = useState("");
-  const [tanggal, setTanggal] = useState("");
-  const [hasil, setHasil] = useState("");
+  const [tanggalDari, setTanggalDari] = useState("");
+  const [tanggalSampai, setTanggalSampai] = useState("");
+  const [pendingDelete, setPendingDelete] = useState<Rikkes | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   // ==========================================
   // STATE PAGINATION
@@ -57,29 +101,26 @@ export function RiwayatUploadMcu({
       // ========================================
       // FILTER TANGGAL
       // ========================================
-      const cocokTanggal =
-        !tanggal ||
-        r.tanggalPemeriksaan === tanggal;
+      const cocokTanggalDari =
+        !tanggalDari ||
+        r.tanggalPemeriksaan >= tanggalDari;
 
-      // ========================================
-      // FILTER HASIL
-      // ========================================
-      const cocokHasil =
-        !hasil ||
-        r.hasil === hasil;
+      const cocokTanggalSampai =
+        !tanggalSampai ||
+        r.tanggalPemeriksaan <= tanggalSampai;
 
       return (
         cocokPeserta &&
-        cocokTanggal &&
-        cocokHasil
+        cocokTanggalDari &&
+        cocokTanggalSampai
       );
     });
   }, [
     rikkes,
     peserta,
     searchPeserta,
-    tanggal,
-    hasil,
+    tanggalDari,
+    tanggalSampai,
   ]);
 
   // ==========================================
@@ -115,8 +156,8 @@ export function RiwayatUploadMcu({
     setCurrentPage(1);
   }, [
     searchPeserta,
-    tanggal,
-    hasil,
+    tanggalDari,
+    tanggalSampai,
   ]);
 
   // ==========================================
@@ -124,8 +165,8 @@ export function RiwayatUploadMcu({
   // ==========================================
   function resetFilter() {
     setSearchPeserta("");
-    setTanggal("");
-    setHasil("");
+    setTanggalDari("");
+    setTanggalSampai("");
     setCurrentPage(1);
   }
 
@@ -160,6 +201,31 @@ export function RiwayatUploadMcu({
     setCurrentPage(page);
   }
 
+  async function confirmDelete() {
+    if (!pendingDelete) return;
+    setDeleting(true);
+    setDeleteError("");
+    try {
+      const res = await fetch(`/api/rikkes/${pendingDelete.id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setDeleteError(data.error || "Gagal menghapus data MCU.");
+        return;
+      }
+      if (editingId === pendingDelete.id) {
+        onCancelEdit();
+      }
+      setPendingDelete(null);
+      router.refresh();
+    } catch {
+      setDeleteError("Terjadi kesalahan saat menghapus data MCU.");
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   return (
     <section
       className="panel"
@@ -191,7 +257,7 @@ export function RiwayatUploadMcu({
         style={{
           display: "grid",
           gridTemplateColumns:
-            "2fr 1.5fr 1.5fr 1fr",
+            "2fr 1.3fr 1.3fr 1fr",
           gap: "1rem",
           alignItems: "end",
           marginBottom: "1rem",
@@ -220,18 +286,18 @@ export function RiwayatUploadMcu({
 
 
         {/* ==================================
-            TANGGAL PEMERIKSAAN
+            DARI TANGGAL PEMERIKSAAN
         =================================== */}
         <div className="field">
           <label>
-            Tanggal Pemeriksaan
+            Dari Tanggal Pemeriksaan
           </label>
 
           <input
             type="date"
-            value={tanggal}
+            value={tanggalDari}
             onChange={(e) =>
-              setTanggal(
+              setTanggalDari(
                 e.target.value
               )
             }
@@ -240,37 +306,22 @@ export function RiwayatUploadMcu({
 
 
         {/* ==================================
-            HASIL RIKKES
+            SAMPAI TANGGAL PEMERIKSAAN
         =================================== */}
         <div className="field">
           <label>
-            Hasil Rikkes
+            Sampai Tanggal Pemeriksaan
           </label>
 
-          <select
-            value={hasil}
+          <input
+            type="date"
+            value={tanggalSampai}
             onChange={(e) =>
-              setHasil(
+              setTanggalSampai(
                 e.target.value
               )
             }
-          >
-            <option value="">
-              Semua Hasil
-            </option>
-
-            <option value="LAYAK">
-              Layak
-            </option>
-
-            <option value="TIDAK_LAYAK">
-              Tidak Layak
-            </option>
-
-            <option value="PENDING">
-              Menunggu
-            </option>
-          </select>
+          />
         </div>
 
 
@@ -363,6 +414,10 @@ export function RiwayatUploadMcu({
                   </th>
 
                   <th>
+                    Nomor Telepon
+                  </th>
+
+                  <th>
                     Tanggal Pemeriksaan
                   </th>
 
@@ -372,6 +427,10 @@ export function RiwayatUploadMcu({
 
                   <th>
                     Berkas
+                  </th>
+
+                  <th>
+                    Aksi
                   </th>
 
                 </tr>
@@ -398,6 +457,11 @@ export function RiwayatUploadMcu({
 
                       <tr
                         key={r.id}
+                        className={
+                          editingId === r.id
+                            ? "row-editing"
+                            : undefined
+                        }
                       >
 
                         {/* ====================
@@ -425,6 +489,14 @@ export function RiwayatUploadMcu({
                               "-"}
                           </div>
 
+                        </td>
+
+
+                        {/* ====================
+                            NOMOR TELEPON
+                        ===================== */}
+                        <td>
+                          {p?.noHp || "-"}
                         </td>
 
 
@@ -484,6 +556,32 @@ export function RiwayatUploadMcu({
 
                           </div>
 
+                        </td>
+
+                        <td>
+                          <div className="actions">
+                            <button
+                              type="button"
+                              className="icon-btn"
+                              title="Edit"
+                              aria-label={`Edit MCU ${p?.nama || ""}`}
+                              onClick={() => onEdit(r)}
+                            >
+                              <IconEdit />
+                            </button>
+                            <button
+                              type="button"
+                              className="icon-btn icon-btn-danger"
+                              title="Hapus"
+                              aria-label={`Hapus MCU ${p?.nama || ""}`}
+                              onClick={() => {
+                                setDeleteError("");
+                                setPendingDelete(r);
+                              }}
+                            >
+                              <IconTrash />
+                            </button>
+                          </div>
                         </td>
 
                       </tr>
@@ -626,6 +724,62 @@ export function RiwayatUploadMcu({
         </>
 
       )}
+
+      {pendingDelete ? (
+        <div
+          className="confirm-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="hapus-mcu-title"
+          onClick={() => {
+            if (deleting) return;
+            setPendingDelete(null);
+            setDeleteError("");
+          }}
+        >
+          <div
+            className="confirm-card"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 id="hapus-mcu-title">Hapus data MCU?</h3>
+            <p>
+              Data MCU{" "}
+              <strong>
+                {peserta.find((p) => p.id === pendingDelete.pesertaId)
+                  ?.nama || "peserta ini"}
+              </strong>{" "}
+              akan dihapus. Tindakan ini tidak dapat dibatalkan.
+            </p>
+            {deleteError ? (
+              <p className="error-text">{deleteError}</p>
+            ) : null}
+            <div className="actions">
+              <button
+                type="button"
+                className="btn-secondary"
+                style={{ width: "auto" }}
+                onClick={() => {
+                  if (deleting) return;
+                  setPendingDelete(null);
+                  setDeleteError("");
+                }}
+                disabled={deleting}
+              >
+                Tidak
+              </button>
+              <button
+                type="button"
+                className="btn-danger"
+                style={{ width: "auto" }}
+                onClick={confirmDelete}
+                disabled={deleting}
+              >
+                {deleting ? "Menghapus..." : "Ya"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
     </section>
   );

@@ -1,4 +1,4 @@
-export type Role = "admin" | "mcu";
+export type Role = "admin" | "superadmin" | "mcu";
 
 export type User = {
   id: string;
@@ -18,6 +18,18 @@ export type SessionUser = {
 };
 
 export type HasilRikkes = "LAYAK" | "TIDAK_LAYAK" | "PENDING";
+
+export type SkhpkSigner = {
+  atasNama: string;
+  jabatan: string;
+  nama: string;
+  pangkat: string;
+  nrp: string;
+  jenisKelamin: string;
+  satuan: string;
+  status: string;
+  ttdImagePath: string;
+};
 
 export type Peserta = {
   id: string;
@@ -59,6 +71,8 @@ export type Rikkes = {
   barcodeValue?: string;
   uploadedBy: string;
   uploadedByName: string;
+  signerSnapshot?: SkhpkSigner;
+  waSentAt?: string;
   createdAt: string;
 };
 
@@ -72,6 +86,35 @@ export type IzinSenjata = {
   status: "DIAJUKAN" | "VERIFIKASI" | "DISETUJUI" | "DITOLAK";
   catatan: string;
   rikkesId?: string;
+  ditujukanKepada?: string;
   createdAt: string;
   updatedAt: string;
+};
+
+export type ActivityAction =
+  | "PESERTA_TAMBAH"
+  | "MCU_UPLOAD"
+  | "MCU_EDIT"
+  | "MCU_HAPUS"
+  | "IZIN_TAMBAH"
+  | "IZIN_EDIT"
+  | "IZIN_SETUJUI"
+  | "IZIN_TOLAK"
+  | "IZIN_HAPUS"
+  | "PENGATURAN_SKHPK"
+  | "SKHPK_KIRIM_WA";
+
+export type ActivityModule = "PESERTA" | "MCU" | "IZIN" | "PENGATURAN";
+
+export type ActivityLog = {
+  id: string;
+  createdAt: string;
+  userId: string;
+  userName: string;
+  userRole: Role;
+  action: ActivityAction;
+  module: ActivityModule;
+  targetId: string;
+  targetLabel: string;
+  detail: string;
 };

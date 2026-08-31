@@ -1,8 +1,9 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Peserta } from "@/lib/types";
+import { findPesertaByNrp, isValidNrp, normalizeNrp } from "@/lib/format";
 import { SearchableSelect } from "@/components/SearchableSelect";
 
 const empty = {
@@ -92,28 +93,79 @@ const SATUAN_POLRI = [
 export function PesertaForm({
   initial,
   mode = "create",
+  existingPeserta = [],
 }: {
   initial?: Peserta;
   mode?: "create" | "edit";
+  existingPeserta?: Peserta[];
 }) {
   const router = useRouter();
 
   const [form, setForm] = useState(initial || empty);
   const [error, setError] = useState("");
+  const [nrpError, setNrpError] = useState(() =>
+    initial?.nrp && !isValidNrp(initial.nrp)
+      ? "NRP harus 8 digit angka."
+      : "",
+  );
   const [loading, setLoading] = useState(false);
+
+  const duplikatNrp = useMemo(
+    () => findPesertaByNrp(form.nrp, existingPeserta, initial?.id),
+    [form.nrp, existingPeserta, initial?.id],
+  );
+
+  const nrpValid8Digit = isValidNrp(form.nrp);
+
+  function pesanDuplikatNrp(duplikat: Peserta) {
+    return `NRP ${duplikat.nrp} sudah terdaftar atas nama ${duplikat.nama}. Tidak bisa menambah data peserta yang sama.`;
+  }
+
+  function pesanNrp(value: string) {
+    const nrp = normalizeNrp(value);
+    if (!nrp) return "";
+    if (!isValidNrp(nrp)) {
+      return "NRP harus 8 digit angka.";
+    }
+    const duplikat = findPesertaByNrp(nrp, existingPeserta, initial?.id);
+    return duplikat ? pesanDuplikatNrp(duplikat) : "";
+  }
 
   function set<K extends keyof typeof form>(
     key: K,
     value: (typeof form)[K]
   ) {
+    const nextValue =
+      key === "nrp"
+        ? (String(value).replace(/\D/g, "").slice(0, 8) as (typeof form)[K])
+        : value;
+
     setForm((prev) => ({
       ...prev,
-      [key]: value,
+      [key]: nextValue,
     }));
+
+    if (key === "nrp") {
+      setNrpError(pesanNrp(String(nextValue)));
+    }
   }
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
+
+    if (!isValidNrp(form.nrp)) {
+      const pesan = "NRP harus 8 digit angka.";
+      setNrpError(pesan);
+      setError(pesan);
+      return;
+    }
+
+    if (duplikatNrp) {
+      const pesan = pesanDuplikatNrp(duplikatNrp);
+      setNrpError(pesan);
+      setError(pesan);
+      return;
+    }
 
     setLoading(true);
     setError("");
@@ -187,16 +239,32 @@ export function PesertaForm({
         {/* =============================== */}
 
         <div className="field">
-          <label>NRP</label>
+          <label htmlFor="peserta-nrp">NRP</label>
 
           <input
+            id="peserta-nrp"
             value={form.nrp}
             onChange={(e) =>
               set("nrp", e.target.value)
             }
-            placeholder="Masukkan NRP"
+            placeholder="8 digit, contoh 85010234"
+            inputMode="numeric"
+            pattern="\d{8}"
+            maxLength={8}
             required
+            aria-invalid={nrpError ? true : undefined}
+            style={
+              nrpError
+                ? { borderColor: "var(--satria-danger)" }
+                : undefined
+            }
           />
+
+          {nrpError ? (
+            <p className="error-text" style={{ margin: "0.35rem 0 0" }}>
+              {nrpError}
+            </p>
+          ) : null}
         </div>
 
         {/* =============================== */}
@@ -324,36 +392,6 @@ export function PesertaForm({
           </select>
         </div>
 
-        {/* =============================== */}
-        {/* KEPERLUAN */}
-        {/* =============================== */}
-
-        <div className="field">
-          <label>Keperluan</label>
-
-          <select
-            value={form.keperluan}
-            onChange={(e) =>
-              set(
-                "keperluan",
-                e.target.value as Peserta["keperluan"]
-              )
-            }
-          >
-            <option value="IZIN_SENJATA">
-              Izin Senjata Api
-            </option>
-
-            <option value="RIKKES_BERKALA">
-              Rikkes Berkala
-            </option>
-
-            <option value="LAINNYA">
-              Lainnya
-            </option>
-          </select>
-        </div>
-
       </div>
 
       {/* =============================== */}
@@ -372,7 +410,7 @@ export function PesertaForm({
           style={{
             width: "auto",
           }}
-          disabled={loading}
+          disabled={loading || Boolean(duplikatNrp) || !nrpValid8Digit}
         >
           {loading
             ? "Menyimpan..."

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Fraunces, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 
@@ -18,6 +18,11 @@ export const metadata: Metadata = {
   title: "SATRIA — Sistem Administrasi Terintegrasi Rikkes & Izin Senjata Api",
   description:
     "Aplikasi administrasi terintegrasi untuk hasil rikkes MCU RS Polri dan izin senjata api.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

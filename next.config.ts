@@ -10,6 +10,10 @@ const nextConfig: NextConfig = {
         source: "/uploads/:filename",
         destination: "/api/uploads/:filename",
       },
+      {
+        source: "/skhpk-ttd/:filename",
+        destination: "/api/skhpk/specimen/:filename",
+      },
     ];
   },
 };

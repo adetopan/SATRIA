@@ -2,8 +2,9 @@ import { promises as fs } from "fs";
 import path from "path";
 import { ensureUploadDir } from "@/lib/uploads";
 import { query } from "./pg";
-import { buildBarcodeValue, buildNomorSkhpk } from "./skhpk";
-import type { IzinSenjata, Peserta, Rikkes, User } from "./types";
+import { buildBarcodeValue, buildNomorSkhpk, parseSignerSnapshot, SKHPK_SIGNER } from "./skhpk";
+import { parseRole } from "./roles";
+import type { ActivityLog, IzinSenjata, Peserta, Rikkes, SkhpkSigner, User } from "./types";
 
 async function ensureUploadsDir() {
   await ensureUploadDir();
@@ -16,6 +17,14 @@ const defaultUsers: User[] = [
     password: "admin123",
     name: "Administrator SATRIA",
     role: "admin",
+    unit: "Pusdokkes Polri",
+  },
+  {
+    id: "u-superadmin",
+    username: "superadmin",
+    password: "superadmin123",
+    name: "Superadmin SATRIA",
+    role: "superadmin",
     unit: "Pusdokkes Polri",
   },
   {
@@ -188,6 +197,7 @@ const defaultIzin: IzinSenjata[] = [
     status: "DISETUJUI",
     catatan: "SKHPK telah diterbitkan.",
     rikkesId: "r-002",
+    ditujukanKepada: "As SDM Kapolri",
     createdAt: now,
     updatedAt: now,
   },
@@ -238,7 +248,70 @@ function mapRikkes(row: Record<string, unknown>): Rikkes {
     barcodeValue: row.barcode_value ? String(row.barcode_value) : undefined,
     uploadedBy: String(row.uploaded_by || ""),
     uploadedByName: String(row.uploaded_by_name || ""),
+    signerSnapshot: parseSignerSnapshot(row.signer_snapshot),
+    waSentAt: row.wa_sent_at
+      ? new Date(String(row.wa_sent_at)).toISOString()
+      : undefined,
     createdAt: new Date(String(row.created_at)).toISOString(),
+  };
+}
+
+function mapSkhpkSigner(row: Record<string, unknown>): SkhpkSigner {
+  return {
+    atasNama: String(row.atas_nama || SKHPK_SIGNER.atasNama),
+    jabatan: String(row.jabatan || SKHPK_SIGNER.jabatan),
+    nama: String(row.nama || SKHPK_SIGNER.nama),
+    pangkat: String(row.pangkat || SKHPK_SIGNER.pangkat),
+    nrp: String(row.nrp || SKHPK_SIGNER.nrp),
+    jenisKelamin: String(row.jenis_kelamin || SKHPK_SIGNER.jenisKelamin),
+    satuan: String(row.satuan || SKHPK_SIGNER.satuan),
+    status: String(row.status || SKHPK_SIGNER.status),
+    ttdImagePath: String(row.ttd_image_path || SKHPK_SIGNER.ttdImagePath),
+  };
+}
+
+async function upsertSkhpkSigner(s: SkhpkSigner) {
+  await query(
+    `INSERT INTO skhpk_setting (
+       id, atas_nama, jabatan, nama, pangkat, nrp, jenis_kelamin, satuan, status, ttd_image_path, updated_at
+     ) VALUES ('default',$1,$2,$3,$4,$5,$6,$7,$8,$9,NOW())
+     ON CONFLICT (id) DO UPDATE SET
+       atas_nama = EXCLUDED.atas_nama,
+       jabatan = EXCLUDED.jabatan,
+       nama = EXCLUDED.nama,
+       pangkat = EXCLUDED.pangkat,
+       nrp = EXCLUDED.nrp,
+       jenis_kelamin = EXCLUDED.jenis_kelamin,
+       satuan = EXCLUDED.satuan,
+       status = EXCLUDED.status,
+       ttd_image_path = EXCLUDED.ttd_image_path,
+       updated_at = EXCLUDED.updated_at`,
+    [
+      s.atasNama,
+      s.jabatan,
+      s.nama,
+      s.pangkat,
+      s.nrp,
+      s.jenisKelamin,
+      s.satuan,
+      s.status,
+      s.ttdImagePath || SKHPK_SIGNER.ttdImagePath,
+    ],
+  );
+}
+
+function mapActivityLog(row: Record<string, unknown>): ActivityLog {
+  return {
+    id: String(row.id),
+    createdAt: new Date(String(row.created_at)).toISOString(),
+    userId: String(row.user_id || ""),
+    userName: String(row.user_name || ""),
+    userRole: parseRole(row.user_role),
+    action: String(row.action) as ActivityLog["action"],
+    module: (row.module as ActivityLog["module"]) || "PESERTA",
+    targetId: String(row.target_id || ""),
+    targetLabel: String(row.target_label || ""),
+    detail: String(row.detail || ""),
   };
 }
 
@@ -253,6 +326,7 @@ function mapIzin(row: Record<string, unknown>): IzinSenjata {
     status: (row.status as IzinSenjata["status"]) || "DIAJUKAN",
     catatan: String(row.catatan || ""),
     rikkesId: row.rikkes_id ? String(row.rikkes_id) : undefined,
+    ditujukanKepada: String(row.ditujukan_kepada || ""),
     createdAt: new Date(String(row.created_at)).toISOString(),
     updatedAt: new Date(String(row.updated_at)).toISOString(),
   };
@@ -269,12 +343,108 @@ export async function ensureDb() {
     "utf8",
   );
   await query(schema);
+  await query(
+    `ALTER TABLE izin_senjata
+     ADD COLUMN IF NOT EXISTS ditujukan_kepada TEXT NOT NULL DEFAULT ''`,
+  );
+  await query(
+    `CREATE TABLE IF NOT EXISTS activity_log (
+       id TEXT PRIMARY KEY,
+       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+       user_id TEXT NOT NULL DEFAULT '',
+       user_name TEXT NOT NULL DEFAULT '',
+       user_role TEXT NOT NULL DEFAULT '',
+       action TEXT NOT NULL,
+       module TEXT NOT NULL,
+       target_id TEXT NOT NULL DEFAULT '',
+       target_label TEXT NOT NULL DEFAULT '',
+       detail TEXT NOT NULL DEFAULT ''
+     )`,
+  );
+  await query(
+    `CREATE INDEX IF NOT EXISTS idx_activity_log_created ON activity_log(created_at DESC)`,
+  );
+  await query(
+    `CREATE TABLE IF NOT EXISTS skhpk_setting (
+       id TEXT PRIMARY KEY,
+       atas_nama TEXT NOT NULL DEFAULT '',
+       jabatan TEXT NOT NULL DEFAULT '',
+       nama TEXT NOT NULL DEFAULT '',
+       pangkat TEXT NOT NULL DEFAULT '',
+       nrp TEXT NOT NULL DEFAULT '',
+       jenis_kelamin TEXT NOT NULL DEFAULT '',
+       satuan TEXT NOT NULL DEFAULT '',
+       status TEXT NOT NULL DEFAULT 'Aktif',
+       ttd_image_path TEXT NOT NULL DEFAULT '/specimen-ttd.png',
+       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+     )`,
+  );
+  await query(
+    `ALTER TABLE skhpk_setting
+     ADD COLUMN IF NOT EXISTS satuan TEXT NOT NULL DEFAULT ''`,
+  );
+  await query(
+    `ALTER TABLE skhpk_setting
+     ADD COLUMN IF NOT EXISTS ttd_image_path TEXT NOT NULL DEFAULT '/specimen-ttd.png'`,
+  );
+  await query(
+    `ALTER TABLE rikkes
+     ADD COLUMN IF NOT EXISTS signer_snapshot JSONB`,
+  );
+  await query(
+    `ALTER TABLE rikkes
+     ADD COLUMN IF NOT EXISTS wa_sent_at TIMESTAMPTZ`,
+  );
+  await query(`
+    DO $$
+    DECLARE r RECORD;
+    BEGIN
+      FOR r IN
+        SELECT c.conname
+        FROM pg_constraint c
+        JOIN pg_class t ON c.conrelid = t.oid
+        WHERE t.relname = 'users'
+          AND c.contype = 'c'
+          AND pg_get_constraintdef(c.oid) ILIKE '%role%'
+      LOOP
+        EXECUTE format('ALTER TABLE users DROP CONSTRAINT IF EXISTS %I', r.conname);
+      END LOOP;
+      ALTER TABLE users ADD CONSTRAINT users_role_check
+        CHECK (role IN ('admin', 'superadmin', 'mcu'));
+    EXCEPTION
+      WHEN duplicate_object THEN NULL;
+    END $$;
+  `);
+
+  const signerCount = await query<{ count: string }>(
+    "SELECT COUNT(*)::text AS count FROM skhpk_setting",
+  );
+  if (Number(signerCount.rows[0]?.count || 0) === 0) {
+    await upsertSkhpkSigner(SKHPK_SIGNER);
+  }
 
   const usersCount = await query<{ count: string }>(
     "SELECT COUNT(*)::text AS count FROM users",
   );
   if (Number(usersCount.rows[0]?.count || 0) === 0) {
     await seedDefaults();
+  }
+
+  const superadmin = defaultUsers.find((u) => u.role === "superadmin");
+  if (superadmin) {
+    await query(
+      `INSERT INTO users (id, username, password, name, role, unit)
+       VALUES ($1,$2,$3,$4,$5,$6)
+       ON CONFLICT (id) DO NOTHING`,
+      [
+        superadmin.id,
+        superadmin.username,
+        superadmin.password,
+        superadmin.name,
+        superadmin.role,
+        superadmin.unit,
+      ],
+    );
   }
 
   ensured = true;
@@ -382,8 +552,8 @@ async function upsertIzin(i: IzinSenjata) {
   await query(
     `INSERT INTO izin_senjata (
        id, peserta_id, nomor_permohonan, jenis_senjata, keperluan, tanggal_pengajuan,
-       status, catatan, rikkes_id, created_at, updated_at
-     ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+       status, catatan, rikkes_id, ditujukan_kepada, created_at, updated_at
+     ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
      ON CONFLICT (id) DO UPDATE SET
        peserta_id = EXCLUDED.peserta_id,
        nomor_permohonan = EXCLUDED.nomor_permohonan,
@@ -393,6 +563,7 @@ async function upsertIzin(i: IzinSenjata) {
        status = EXCLUDED.status,
        catatan = EXCLUDED.catatan,
        rikkes_id = EXCLUDED.rikkes_id,
+       ditujukan_kepada = EXCLUDED.ditujukan_kepada,
        updated_at = EXCLUDED.updated_at`,
     [
       i.id,
@@ -404,6 +575,7 @@ async function upsertIzin(i: IzinSenjata) {
       i.status,
       i.catatan,
       i.rikkesId || null,
+      i.ditujukanKepada || "",
       i.createdAt,
       i.updatedAt,
     ],
@@ -434,7 +606,7 @@ export async function getUsers() {
     username: String(row.username),
     password: String(row.password),
     name: String(row.name),
-    role: row.role as User["role"],
+    role: parseRole(row.role),
     unit: String(row.unit || ""),
   }));
 }
@@ -495,6 +667,80 @@ export async function saveIzin(data: IzinSenjata[]) {
     }
   }
   for (const i of data) await upsertIzin(i);
+}
+
+export async function insertActivityLog(log: ActivityLog) {
+  await ensureDb();
+  await query(
+    `INSERT INTO activity_log (
+       id, created_at, user_id, user_name, user_role, action, module,
+       target_id, target_label, detail
+     ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+    [
+      log.id,
+      log.createdAt,
+      log.userId,
+      log.userName,
+      log.userRole,
+      log.action,
+      log.module,
+      log.targetId,
+      log.targetLabel,
+      log.detail,
+    ],
+  );
+}
+
+export async function getActivityLogs() {
+  await ensureDb();
+  const result = await query(
+    "SELECT * FROM activity_log ORDER BY created_at DESC LIMIT 1000",
+  );
+  return result.rows.map((row) => mapActivityLog(row));
+}
+
+export async function getSkhpkSigner(): Promise<SkhpkSigner> {
+  await ensureDb();
+  const result = await query(
+    "SELECT * FROM skhpk_setting WHERE id = 'default' LIMIT 1",
+  );
+  const row = result.rows[0];
+  return row ? mapSkhpkSigner(row) : { ...SKHPK_SIGNER };
+}
+
+export async function saveSkhpkSigner(signer: SkhpkSigner) {
+  await ensureDb();
+  await upsertSkhpkSigner(signer);
+  return getSkhpkSigner();
+}
+
+export async function resolveSkhpkSigner(rikkes: Rikkes): Promise<SkhpkSigner> {
+  if (rikkes.signerSnapshot) return rikkes.signerSnapshot;
+  return getSkhpkSigner();
+}
+
+export async function freezeSkhpkSignerOnSend(
+  rikkesId: string,
+): Promise<Rikkes | null> {
+  await ensureDb();
+  const existing = (await getRikkes()).find((r) => r.id === rikkesId);
+  if (!existing) return null;
+  if (existing.signerSnapshot) return existing;
+
+  const signer = await getSkhpkSigner();
+  await query(
+    `UPDATE rikkes
+     SET signer_snapshot = $1::jsonb,
+         wa_sent_at = COALESCE(wa_sent_at, NOW())
+     WHERE id = $2 AND signer_snapshot IS NULL`,
+    [JSON.stringify(signer), rikkesId],
+  );
+
+  return {
+    ...existing,
+    signerSnapshot: signer,
+    waSentAt: existing.waSentAt || new Date().toISOString(),
+  };
 }
 
 export function uid(prefix: string) {

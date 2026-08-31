@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from "crypto";
 import { cookies } from "next/headers";
+import { normalizeNrp } from "@/lib/format";
 
 const COOKIE_NAME = "satria_skhpk_access";
 const SECRET = process.env.SATRIA_SECRET || "satria-dev-secret-change-me";
@@ -28,10 +29,6 @@ function decode(token: string): string[] | null {
   } catch {
     return null;
   }
-}
-
-export function normalizeNrp(nrp: string) {
-  return nrp.replace(/\s+/g, "").trim();
 }
 
 export function nrpMatches(input: string, actual: string) {

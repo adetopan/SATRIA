@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getSession } from "@/lib/auth";
+import { isStaffAdmin } from "@/lib/roles";
 import { getIzin, getPeserta, getRikkes } from "@/lib/db";
 import { formatDate, labelKeperluan } from "@/lib/format";
 import { IzinBadge, RikkesBadge } from "@/components/StatusBadge";
@@ -175,28 +176,59 @@ export default async function PesertaDetailPage({ params }: Params) {
                   <th>Jenis</th>
                   <th>Tanggal</th>
                   <th>Status</th>
+                  <th>Aksi</th>
                 </tr>
               </thead>
               <tbody>
-                {izin.map((i) => (
-                  <tr key={i.id}>
-                    <td>{i.nomorPermohonan}</td>
-                    <td>{i.jenisSenjata}</td>
-                    <td>{formatDate(i.tanggalPengajuan)}</td>
-                    <td>
-                      <IzinBadge value={i.status} />
-                    </td>
-                  </tr>
-                ))}
+                {izin.map((i) => {
+                  const linkedRikkes = rikkes.find((r) => r.id === i.rikkesId);
+                  const canCetak =
+                    i.status === "DISETUJUI" &&
+                    linkedRikkes &&
+                    (linkedRikkes.hasil === "LAYAK" || canPrintSkhpk(linkedRikkes));
+
+                  return (
+                    <tr key={i.id}>
+                      <td>{i.nomorPermohonan}</td>
+                      <td>{i.jenisSenjata}</td>
+                      <td>{formatDate(i.tanggalPengajuan)}</td>
+                      <td>
+                        <IzinBadge value={i.status} />
+                      </td>
+                      <td>
+                        {canCetak && linkedRikkes ? (
+                          <Link
+                            href={`/skhpk/${linkedRikkes.id}`}
+                            target="_blank"
+                            className="btn-secondary"
+                            style={{ whiteSpace: "nowrap" }}
+                          >
+                            Cetak SKHPK
+                          </Link>
+                        ) : (
+                          <span style={{ color: "var(--satria-muted)" }}>
+                            {i.status === "DISETUJUI"
+                              ? "SKHPK belum tersedia"
+                              : "—"}
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         )}
       </section>
 
-      {session?.role === "admin" ? (
+      {isStaffAdmin(session?.role) ? (
         <div style={{ marginTop: "1rem" }}>
-          <PesertaForm initial={peserta} mode="edit" />
+          <PesertaForm
+            initial={peserta}
+            mode="edit"
+            existingPeserta={pesertaList}
+          />
         </div>
       ) : null}
     </div>

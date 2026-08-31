@@ -1,4 +1,5 @@
 import { getSession } from "@/lib/auth";
+import { isStaffAdmin } from "@/lib/roles";
 import { getPeserta } from "@/lib/db";
 import { PesertaForm } from "@/components/PesertaForm";
 import { DaftarPeserta } from "@/components/DaftarPeserta";
@@ -8,8 +9,7 @@ export default async function PesertaPage() {
 
   const peserta = await getPeserta();
 
-  const isAdmin =
-    session?.role === "admin";
+  const isAdmin = isStaffAdmin(session?.role);
 
   return (
     <div>
@@ -18,7 +18,7 @@ export default async function PesertaPage() {
       ====================================== */}
 
       {isAdmin ? (
-        <PesertaForm />
+        <PesertaForm existingPeserta={peserta} />
       ) : null}
 
       {/* =====================================

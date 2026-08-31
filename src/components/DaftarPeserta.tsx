@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { labelKeperluan } from "@/lib/format";
-import { IzinBadge, RikkesBadge } from "@/components/StatusBadge";
+import { formatDate } from "@/lib/format";
 import type { Peserta } from "@/lib/types";
 
 type Props = {
@@ -357,30 +356,14 @@ export function DaftarPeserta({ peserta }: Props) {
             <table>
               <thead>
                 <tr>
-                  <th>
-                    Nama
-                  </th>
-
-                  <th>
-                    NRP
-                  </th>
-
-                  <th>
-                    Satuan
-                  </th>
-
-                  <th>
-                    Keperluan
-                  </th>
-
-                  <th>
-                    Rikkes
-                  </th>
-
-                  <th>
-                    Izin
-                  </th>
-
+                  <th>Nama</th>
+                  <th>NRP</th>
+                  <th>Pangkat</th>
+                  <th>Jabatan</th>
+                  <th>Satuan</th>
+                  <th>Alamat Kantor</th>
+                  <th>Tanggal Lahir</th>
+                  <th>Jenis Kelamin</th>
                   <th></th>
                 </tr>
               </thead>
@@ -396,54 +379,20 @@ export function DaftarPeserta({ peserta }: Props) {
                         <strong>
                           {p.nama}
                         </strong>
-
-                        <div
-                          style={{
-                            color:
-                              "var(--satria-muted)",
-                            fontSize:
-                              "0.8rem",
-                          }}
-                        >
-                          {p.pangkat}{" "}
-                          ·{" "}
-                          {p.jabatan}
-                        </div>
                       </td>
 
-                      {/* NRP */}
+                      <td>{p.nrp}</td>
+                      <td>{p.pangkat || "-"}</td>
+                      <td>{p.jabatan || "-"}</td>
+                      <td>{p.satuan || "-"}</td>
+                      <td>{p.alamatKantor || "-"}</td>
+                      <td>{formatDate(p.tanggalLahir)}</td>
                       <td>
-                        {p.nrp}
-                      </td>
-
-                      {/* SATUAN */}
-                      <td>
-                        {p.satuan}
-                      </td>
-
-                      {/* KEPERLUAN */}
-                      <td>
-                        {labelKeperluan(
-                          p.keperluan
-                        )}
-                      </td>
-
-                      {/* RIKKES */}
-                      <td>
-                        <RikkesBadge
-                          value={
-                            p.statusRikkes
-                          }
-                        />
-                      </td>
-
-                      {/* IZIN */}
-                      <td>
-                        <IzinBadge
-                          value={
-                            p.statusIzin
-                          }
-                        />
+                        {p.jenisKelamin === "P"
+                          ? "Perempuan"
+                          : p.jenisKelamin === "L"
+                            ? "Laki-laki"
+                            : "-"}
                       </td>
 
                       {/* DETAIL */}

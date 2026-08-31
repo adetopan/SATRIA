@@ -4,12 +4,15 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import type { SessionUser } from "@/lib/types";
+import { roleLabel } from "@/lib/roles";
 
 const nav = [
-  { href: "/dashboard", label: "Dashboard", roles: ["admin", "mcu"] },
-  { href: "/peserta", label: "Data Peserta", roles: ["admin"] },
-  { href: "/upload-mcu", label: "Upload MCU", roles: ["admin", "mcu"] },
-  { href: "/izin-senjata", label: "Izin Senjata Api", roles: ["admin"] },
+  { href: "/dashboard", label: "Dashboard", roles: ["admin", "superadmin", "mcu"] },
+  { href: "/peserta", label: "Data Peserta", roles: ["admin", "superadmin"] },
+  { href: "/upload-mcu", label: "Upload MCU", roles: ["admin", "superadmin", "mcu"] },
+  { href: "/izin-senjata", label: "Izin Senjata Api", roles: ["admin", "superadmin"] },
+  { href: "/log-aktivitas", label: "Log Aktivitas", roles: ["superadmin"] },
+  { href: "/pengaturan-skhpk", label: "Pengaturan SKHPK", roles: ["superadmin"] },
 ];
 
 export function AppShell({
@@ -68,7 +71,7 @@ export function AppShell({
         <div className="sidebar-foot">
           <p className="user-name">{user.name}</p>
           <p className="user-meta">
-            {user.role === "mcu" ? "MCU RS Polri" : "Admin SATRIA"}
+            {roleLabel(user.role)}
           </p>
           <p className="user-meta">{user.unit}</p>
           <button type="button" className="btn-ghost" onClick={handleLogout}>
@@ -96,7 +99,9 @@ export function AppShell({
           <div className="topbar-chip">
             {user.role === "mcu"
               ? "Akses Upload Hasil Rikkes"
-              : "Akses Penuh Administrasi"}
+              : user.role === "superadmin"
+                ? "Akses Penuh Superadmin"
+                : "Akses Administrasi"}
           </div>
         </header>
         <main className="content">{children}</main>

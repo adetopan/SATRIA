@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
+import { recordActivity } from "@/lib/activity-log";
+import { pesertaActivityLabel } from "@/lib/activity-labels";
 import { requireSession } from "@/lib/auth";
-import { getIzin, getPeserta, saveIzin, savePeserta, uid } from "@/lib/db";
+import { STAFF_ADMIN_ROLES } from "@/lib/roles";
+import { getIzin, getPeserta, getRikkes, saveIzin, savePeserta, saveRikkes, uid } from "@/lib/db";
 import type { IzinSenjata } from "@/lib/types";
 
 export async function GET() {
@@ -19,7 +22,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const session = await requireSession(["admin"]);
+  const session = await requireSession(STAFF_ADMIN_ROLES);
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -44,6 +47,7 @@ export async function POST(request: Request) {
     status: body.status || "DIAJUKAN",
     catatan: String(body.catatan || "").trim(),
     rikkesId: body.rikkesId || undefined,
+    ditujukanKepada: String(body.ditujukanKepada || "").trim(),
     createdAt: now,
     updatedAt: now,
   };
@@ -58,6 +62,18 @@ export async function POST(request: Request) {
   const list = await getIzin();
   list.unshift(record);
   await saveIzin(list);
+
+  if (record.rikkesId) {
+    const rikkesList = await getRikkes();
+    const rIndex = rikkesList.findIndex((r) => r.id === record.rikkesId);
+    if (rIndex >= 0) {
+      rikkesList[rIndex] = {
+        ...rikkesList[rIndex],
+        ditujukanKepada: record.ditujukanKepada,
+      };
+      await saveRikkes(rikkesList);
+    }
+  }
 
   const statusMap: Record<
     IzinSenjata["status"],
@@ -75,6 +91,14 @@ export async function POST(request: Request) {
     updatedAt: now,
   };
   await savePeserta(pesertaList);
+
+  await recordActivity(session, {
+    action: "IZIN_TAMBAH",
+    module: "IZIN",
+    targetId: record.id,
+    targetLabel: pesertaActivityLabel(pesertaList[index]),
+    detail: `Nomor ${record.nomorPermohonan} · ${record.jenisSenjata}`,
+  });
 
   return NextResponse.json({ data: record }, { status: 201 });
 }

@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 type Props = {
   noHp?: string | null;
   nama?: string | null;
@@ -17,7 +19,9 @@ export function KirimWaButton({
   izinId,
   status,
 }: Props) {
-  function kirimWA() {
+  const [loading, setLoading] = useState(false);
+
+  async function kirimWA() {
     if (!noHp) {
       alert("Nomor HP peserta belum tersedia.");
       return;
@@ -35,21 +39,9 @@ export function KirimWaButton({
       nomor = "62" + nomor;
     }
 
-    /*
-     * URL aplikasi
-     *
-     * Jika sudah hosting, lebih baik gunakan:
-     * const baseUrl = window.location.origin;
-     */
     const baseUrl = window.location.origin;
-
     let linkHalaman = "";
 
-    /*
-     * ================================
-     * JIKA DISETUJUI
-     * ================================
-     */
     if (status === "DISETUJUI") {
       if (!rikkesId) {
         alert("Data rikkes tidak ditemukan.");
@@ -57,32 +49,38 @@ export function KirimWaButton({
       }
 
       linkHalaman = `${baseUrl}/skhpk/${rikkesId}`;
-    }
-
-    /*
-     * ================================
-     * JIKA DITOLAK
-     * ================================
-     */
-    else if (status === "DITOLAK") {
+    } else if (status === "DITOLAK") {
       linkHalaman = `${baseUrl}/tidak-memenuhi-syarat/${izinId}`;
-    }
-
-    /*
-     * Status lainnya
-     */
-    else {
+    } else {
       alert(
-        "Surat belum dapat dikirim karena status izin belum disetujui atau ditolak."
+        "Surat belum dapat dikirim karena status izin belum disetujui atau ditolak.",
       );
       return;
     }
 
-    /*
-     * ================================
-     * PESAN WHATSAPP
-     * ================================
-     */
+    if (status === "DISETUJUI" && rikkesId) {
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/skhpk/${rikkesId}/kirim-wa`, {
+          method: "POST",
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          alert(
+            data.error ||
+              "Gagal mengunci data cetakan SKHPK. Pengiriman WhatsApp dibatalkan.",
+          );
+          return;
+        }
+      } catch {
+        alert(
+          "Gagal mengunci data cetakan SKHPK. Pengiriman WhatsApp dibatalkan.",
+        );
+        return;
+      } finally {
+        setLoading(false);
+      }
+    }
 
     let pesan = "";
 
@@ -108,19 +106,10 @@ export function KirimWaButton({
         `TIDAK MEMENUHI SYARAT.\n\n` +
         `Untuk informasi lebih lanjut, silakan menghubungi ` +
         `Subbid Keslasus Bidkesmapta Rokespol Pusdokkes Polri.\n\n` +
-        // `Informasi selengkapnya dapat dilihat melalui tautan berikut:\n\n` +
-        // `${linkHalaman}\n\n` +
         `Demikian disampaikan. Terima kasih.`;
     }
 
-    /*
-     * Encode pesan supaya aman digunakan
-     * pada URL WhatsApp
-     */
-    const url = `https://wa.me/${nomor}?text=${encodeURIComponent(
-      pesan
-    )}`;
-
+    const url = `https://wa.me/${nomor}?text=${encodeURIComponent(pesan)}`;
     window.open(url, "_blank");
   }
 
@@ -129,11 +118,17 @@ export function KirimWaButton({
       type="button"
       className="btn-secondary"
       onClick={kirimWA}
+      disabled={loading}
+      title={
+        status === "DISETUJUI"
+          ? "Data pejabat cetakan SKHPK dikunci pada pengiriman pertama."
+          : undefined
+      }
       style={{
         whiteSpace: "nowrap",
       }}
     >
-      Kirim WA
+      {loading ? "Menyiapkan..." : "Kirim WA"}
     </button>
   );
 }

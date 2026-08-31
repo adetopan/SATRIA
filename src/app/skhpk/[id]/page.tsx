@@ -4,13 +4,13 @@ import { notFound } from "next/navigation";
 import { PrintButton } from "@/components/PrintButton";
 import { QrCode } from "@/components/QrCode";
 import { SkhpkUnlockForm } from "@/components/SkhpkUnlockForm";
+import { SkhpkWatermark } from "@/components/SkhpkWatermark";
 import { getAppOrigin } from "@/lib/app-url";
 import { getSession } from "@/lib/auth";
-import { getPeserta, getRikkes } from "@/lib/db";
+import { getIzin, getPeserta, getRikkes, resolveSkhpkSigner } from "@/lib/db";
 import { hasSkhpkAccess } from "@/lib/skhpk-access";
 import {
   SKHPK_DASAR,
-  SKHPK_SIGNER,
   canPrintSkhpk,
   formatLongDateId,
   memenuhiSyarat,
@@ -21,10 +21,11 @@ type Params = { params: Promise<{ id: string }> };
 
 export default async function SkhpkPage({ params }: Params) {
   const { id } = await params;
-  const [session, rikkesList, pesertaList] = await Promise.all([
+  const [session, rikkesList, pesertaList, izinList] = await Promise.all([
     getSession(),
     getRikkes(),
     getPeserta(),
+    getIzin(),
   ]);
 
   const rikkes = rikkesList.find((r) => r.id === id);
@@ -67,20 +68,31 @@ export default async function SkhpkPage({ params }: Params) {
   const tanggalTerbit =
     rikkes.tanggalTerbit || rikkes.tanggalPemeriksaan;
 
+  const signer = await resolveSkhpkSigner(rikkes);
   const origin = await getAppOrigin();
   const qrUrl = `${origin}/ttd/${rikkes.id}`;
 
   const lulus = memenuhiSyarat(rikkes.hasil);
 
+  const izin =
+    izinList.find((item) => item.rikkesId === rikkes.id) ||
+    izinList
+      .filter((item) => item.pesertaId === rikkes.pesertaId)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
+
   const ditujukan =
-    rikkes.ditujukanKepada || "As SDM Kapolri";
+    izin?.ditujukanKepada?.trim() ||
+    rikkes.ditujukanKepada?.trim() ||
+    "As SDM Kapolri";
+
+  const rujukanB = izin?.nomorPermohonan?.trim() || "-";
 
   return (
     <div className="skhpk-page">
 
       {/* ================= TOOLBAR ================= */}
       <div className="skhpk-toolbar no-print">
-        <div>
+        <div className="skhpk-toolbar-copy">
           <p className="eyebrow">Cetakan Resmi SATRIA</p>
 
           <h1>
@@ -109,7 +121,10 @@ export default async function SkhpkPage({ params }: Params) {
       </div>
 
       {/* ================= SURAT ================= */}
-      <article className="skhpk-sheet">
+      <div className="skhpk-preview">
+        <div className="skhpk-stage">
+          <article className="skhpk-sheet">
+        <SkhpkWatermark />
 
         {/* ================= KOP ================= */}
         <header className="skhpk-header">
@@ -149,19 +164,20 @@ export default async function SkhpkPage({ params }: Params) {
 
           {/* POINT 1 */}
           <div className="skhpk-row">
-
-            <div className="skhpk-number">
-              1.
-            </div>
-
+            <div className="skhpk-number">1.</div>
             <div className="skhpk-content">
-
-              <p>
-                {SKHPK_DASAR}
-              </p>
-
+              <p>Rujukan:</p>
+              <div className="skhpk-rujukan">
+                <div className="skhpk-rujukan-item">
+                  <span>a.</span>
+                  <p>{SKHPK_DASAR}</p>
+                </div>
+                <div className="skhpk-rujukan-item">
+                  <span>b.</span>
+                  <p>{rujukanB}</p>
+                </div>
+              </div>
             </div>
-
           </div>
 
           {/* POINT 2 */}
@@ -341,11 +357,11 @@ export default async function SkhpkPage({ params }: Params) {
             </p>
 
             <p className="skhpk-sign-title">
-              a.n. KEPALA PUSAT KEDOKTERAN DAN KESEHATAN POLRI
+              {signer.atasNama}
             </p>
 
             <p className="skhpk-sign-position">
-              KAROKESPOL
+              {signer.jabatan}
             </p>
 
             {/* QR SPECIMEN TTD */}
@@ -363,11 +379,11 @@ export default async function SkhpkPage({ params }: Params) {
 
             {/* NAMA */}
             <p className="skhpk-signer-name">
-              {SKHPK_SIGNER.nama}
+              {signer.nama}
             </p>
 
             <p className="skhpk-signer-rank">
-              {SKHPK_SIGNER.pangkat}
+              {signer.pangkat}
             </p>
 
           </div>
@@ -375,6 +391,8 @@ export default async function SkhpkPage({ params }: Params) {
         </div>
 
       </article>
+        </div>
+      </div>
 
     </div>
   );

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { requireSession } from "@/lib/auth";
+import { STAFF_ADMIN_ROLES } from "@/lib/roles";
 import { getIzin, getPeserta, getRikkes, savePeserta } from "@/lib/db";
+import { findPesertaByNrp, isValidNrp, normalizeNrp } from "@/lib/format";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -24,7 +26,7 @@ export async function GET(_request: Request, { params }: Params) {
 }
 
 export async function PUT(request: Request, { params }: Params) {
-  const session = await requireSession(["admin"]);
+  const session = await requireSession(STAFF_ADMIN_ROLES);
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -37,9 +39,27 @@ export async function PUT(request: Request, { params }: Params) {
     return NextResponse.json({ error: "Peserta tidak ditemukan" }, { status: 404 });
   }
 
+  const nrp = normalizeNrp(String(body.nrp ?? list[index].nrp));
+  if (!isValidNrp(nrp)) {
+    return NextResponse.json(
+      { error: "NRP harus 8 digit angka." },
+      { status: 400 },
+    );
+  }
+
+  const duplikat = findPesertaByNrp(nrp, list, id);
+  if (duplikat) {
+    return NextResponse.json(
+      {
+        error: `NRP ${nrp} sudah terdaftar atas nama ${duplikat.nama}.`,
+      },
+      { status: 409 },
+    );
+  }
+
   list[index] = {
     ...list[index],
-    nrp: String(body.nrp ?? list[index].nrp).trim(),
+    nrp,
     nama: String(body.nama ?? list[index].nama).trim(),
     pangkat: String(body.pangkat ?? list[index].pangkat).trim(),
     satuan: String(body.satuan ?? list[index].satuan).trim(),
@@ -57,7 +77,7 @@ export async function PUT(request: Request, { params }: Params) {
 }
 
 export async function DELETE(_request: Request, { params }: Params) {
-  const session = await requireSession(["admin"]);
+  const session = await requireSession(STAFF_ADMIN_ROLES);
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

@@ -48,3 +48,16 @@ export function resolveUploadPath(filename: string) {
   return null;
 }
 
+export async function storeUploadFile(file: File, storedName: string) {
+  await ensureUploadDir();
+  const buffer = Buffer.from(await file.arrayBuffer());
+  await fs.writeFile(path.join(uploadDir(), storedName), buffer);
+}
+
+export async function removeUploadByPublicPath(filePath: string) {
+  const filename = path.basename(filePath.replace(/\\/g, "/"));
+  const resolved = resolveUploadPath(filename);
+  if (!resolved) return;
+  await fs.unlink(resolved).catch(() => undefined);
+}
+
