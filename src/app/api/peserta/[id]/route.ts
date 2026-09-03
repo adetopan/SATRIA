@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { requireSession } from "@/lib/auth";
 import { STAFF_ADMIN_ROLES } from "@/lib/roles";
 import { getIzin, getPeserta, getRikkes, savePeserta } from "@/lib/db";
-import { findPesertaByNrp, isValidNrp, normalizeNrp } from "@/lib/format";
+import { isValidNrp, normalizeNrp } from "@/lib/format";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -47,16 +47,6 @@ export async function PUT(request: Request, { params }: Params) {
     );
   }
 
-  const duplikat = findPesertaByNrp(nrp, list, id);
-  if (duplikat) {
-    return NextResponse.json(
-      {
-        error: `NRP ${nrp} sudah terdaftar atas nama ${duplikat.nama}.`,
-      },
-      { status: 409 },
-    );
-  }
-
   list[index] = {
     ...list[index],
     nrp,
@@ -68,6 +58,9 @@ export async function PUT(request: Request, { params }: Params) {
     tanggalLahir: String(body.tanggalLahir ?? list[index].tanggalLahir),
     jenisKelamin: body.jenisKelamin === "P" ? "P" : body.jenisKelamin === "L" ? "L" : list[index].jenisKelamin,
     noHp: String(body.noHp ?? list[index].noHp).trim(),
+    nomorPermohonan: String(
+      body.nomorPermohonan ?? list[index].nomorPermohonan ?? "",
+    ).trim(),
     keperluan: body.keperluan ?? list[index].keperluan,
     updatedAt: new Date().toISOString(),
   };

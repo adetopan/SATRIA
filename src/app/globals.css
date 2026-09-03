@@ -441,7 +441,7 @@ tr.row-editing {
 
 .grid-stats {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 1rem;
   margin-bottom: 1.2rem;
 }
@@ -653,6 +653,12 @@ th {
   }
   50% {
     transform: translateY(-6px);
+  }
+}
+
+@media (max-width: 1400px) {
+  .grid-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 

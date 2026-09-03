@@ -50,6 +50,10 @@ export default async function PesertaDetailPage({ params }: Params) {
             <dd>{peserta.alamatKantor || "-"}</dd>
           </div>
           <div>
+            <dt>Nomor Permohonan</dt>
+            <dd>{peserta.nomorPermohonan || "-"}</dd>
+          </div>
+          <div>
             <dt>Tanggal Lahir</dt>
             <dd>{formatDate(peserta.tanggalLahir)}</dd>
           </div>
@@ -227,7 +231,6 @@ export default async function PesertaDetailPage({ params }: Params) {
           <PesertaForm
             initial={peserta}
             mode="edit"
-            existingPeserta={pesertaList}
           />
         </div>
       ) : null}

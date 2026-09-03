@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE TABLE IF NOT EXISTS peserta (
   id TEXT PRIMARY KEY,
-  nrp TEXT NOT NULL UNIQUE,
+  nrp TEXT NOT NULL,
   nama TEXT NOT NULL,
   pangkat TEXT NOT NULL DEFAULT '',
   satuan TEXT NOT NULL DEFAULT '',
@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS peserta (
   tanggal_lahir TEXT NOT NULL DEFAULT '',
   jenis_kelamin TEXT NOT NULL CHECK (jenis_kelamin IN ('L', 'P')),
   no_hp TEXT NOT NULL DEFAULT '',
+  nomor_permohonan TEXT NOT NULL DEFAULT '',
   keperluan TEXT NOT NULL DEFAULT 'IZIN_SENJATA',
   status_rikkes TEXT NOT NULL DEFAULT 'PENDING',
   status_izin TEXT NOT NULL DEFAULT 'BELUM',

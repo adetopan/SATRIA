@@ -9,16 +9,22 @@ import { SearchableSelect } from "@/components/SearchableSelect";
 type Props = {
   peserta: Peserta[];
   rikkes: Rikkes[];
+  izin: IzinSenjata[];
   editing: IzinSenjata | null;
   onCancelEdit: () => void;
 };
 
-export function IzinForm({ peserta, rikkes, editing, onCancelEdit }: Props) {
+export function IzinForm({
+  peserta,
+  rikkes,
+  izin,
+  editing,
+  onCancelEdit,
+}: Props) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
 
   const [rikkesId, setRikkesId] = useState("");
-  const [nomorPermohonan, setNomorPermohonan] = useState("");
   const [jenisSenjata, setJenisSenjata] = useState("Pistol Dinas");
   const [keperluan, setKeperluan] = useState("");
   const [tanggalPengajuan, setTanggalPengajuan] = useState("");
@@ -28,8 +34,19 @@ export function IzinForm({ peserta, rikkes, editing, onCancelEdit }: Props) {
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const pesertaSudahIzin = useMemo(() => {
+    const ids = new Set(izin.map((i) => i.pesertaId));
+    if (editing) ids.delete(editing.pesertaId);
+    return ids;
+  }, [izin, editing]);
+
+  const rikkesTersedia = useMemo(
+    () => rikkes.filter((r) => !pesertaSudahIzin.has(r.pesertaId)),
+    [rikkes, pesertaSudahIzin],
+  );
+
   const mcuOptions = useMemo(() => {
-    return [...rikkes]
+    return [...rikkesTersedia]
       .sort((a, b) =>
         (b.tanggalPemeriksaan || "").localeCompare(a.tanggalPemeriksaan || ""),
       )
@@ -40,7 +57,15 @@ export function IzinForm({ peserta, rikkes, editing, onCancelEdit }: Props) {
           label: `${p?.nama || "Peserta"} — NRP ${p?.nrp || "-"} (${p?.pangkat || "-"}) — MCU ${formatDate(r.tanggalPemeriksaan)}`,
         };
       });
-  }, [rikkes, peserta]);
+  }, [rikkesTersedia, peserta]);
+
+  const nomorTampil = useMemo(() => {
+    if (editing) return editing.nomorPermohonan;
+    const selected = rikkes.find((r) => r.id === rikkesId);
+    return (
+      peserta.find((p) => p.id === selected?.pesertaId)?.nomorPermohonan || ""
+    );
+  }, [editing, rikkes, rikkesId, peserta]);
 
   useEffect(() => {
     if (!editing) return;
@@ -50,7 +75,6 @@ export function IzinForm({ peserta, rikkes, editing, onCancelEdit }: Props) {
       rikkes.find((r) => r.pesertaId === editing.pesertaId)?.id ||
       "";
     setRikkesId(linked);
-    setNomorPermohonan(editing.nomorPermohonan);
     setJenisSenjata(editing.jenisSenjata);
     setKeperluan(editing.keperluan);
     setTanggalPengajuan(editing.tanggalPengajuan);
@@ -68,7 +92,6 @@ export function IzinForm({ peserta, rikkes, editing, onCancelEdit }: Props) {
 
   function resetForm() {
     setRikkesId("");
-    setNomorPermohonan("");
     setJenisSenjata("Pistol Dinas");
     setKeperluan("");
     setTanggalPengajuan("");
@@ -91,6 +114,15 @@ export function IzinForm({ peserta, rikkes, editing, onCancelEdit }: Props) {
       return;
     }
 
+    const selectedPeserta = peserta.find((p) => p.id === selected.pesertaId);
+    const nomorDariPeserta = selectedPeserta?.nomorPermohonan?.trim() || "";
+    if (!editing && !nomorDariPeserta) {
+      setError(
+        "Nomor permohonan belum diisi pada Data Peserta. Isi terlebih dahulu di menu Data Peserta.",
+      );
+      return;
+    }
+
     setLoading(true);
     setError("");
     setSuccess("");
@@ -98,7 +130,6 @@ export function IzinForm({ peserta, rikkes, editing, onCancelEdit }: Props) {
     const payload: Record<string, string> = {
       pesertaId: selected.pesertaId,
       rikkesId: selected.id,
-      nomorPermohonan,
       jenisSenjata,
       keperluan,
       tanggalPengajuan,
@@ -150,6 +181,17 @@ export function IzinForm({ peserta, rikkes, editing, onCancelEdit }: Props) {
     );
   }
 
+  if (rikkesTersedia.length === 0) {
+    return (
+      <div className="panel">
+        <div className="empty">
+          Semua peserta yang sudah MCU sudah memiliki pengajuan izin senjata
+          api. Hapus pengajuan pada daftar di bawah jika ingin mengajukan ulang.
+        </div>
+      </div>
+    );
+  }
+
   return (
     <form className="panel" onSubmit={onSubmit} ref={formRef}>
       <div className="panel-head">
@@ -160,7 +202,7 @@ export function IzinForm({ peserta, rikkes, editing, onCancelEdit }: Props) {
           <p>
             {editing
               ? "Ubah data pengajuan, lalu simpan kembali. Status kelayakan tidak berubah dari tombol ini."
-              : "Pilih peserta sesuai tanggal pemeriksaan MCU agar pengajuan terhubung ke hasil rikkes yang tepat. Status kelayakan mengikuti keputusan Setujui / Tolak pada daftar di bawah."}
+              : "Hanya peserta yang sudah MCU dan belum memiliki pengajuan izin yang dapat dipilih. Jika pengajuan dihapus, peserta akan tampil lagi di daftar ini."}
           </p>
         </div>
       </div>
@@ -191,10 +233,15 @@ export function IzinForm({ peserta, rikkes, editing, onCancelEdit }: Props) {
         <div className="field">
           <label>Nomor Permohonan</label>
           <input
-            value={nomorPermohonan}
-            onChange={(e) => setNomorPermohonan(e.target.value)}
-            required
+            value={nomorTampil}
+            readOnly
+            placeholder="Diisi pada menu Data Peserta"
           />
+          {!editing && rikkesId && !nomorTampil.trim() ? (
+            <p className="error-text" style={{ margin: "0.35rem 0 0" }}>
+              Isi nomor permohonan di menu Data Peserta terlebih dahulu.
+            </p>
+          ) : null}
         </div>
         <div className="field">
           <label>Jenis Senjata</label>

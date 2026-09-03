@@ -58,21 +58,6 @@ export function isValidNrp(nrp: string) {
   return /^\d{8}$/.test(normalizeNrp(nrp));
 }
 
-export function findPesertaByNrp<T extends { id: string; nrp: string }>(
-  nrp: string,
-  list: T[],
-  excludeId?: string,
-) {
-  const normalized = normalizeNrp(nrp).toLowerCase();
-  if (!normalized) return undefined;
-
-  return list.find(
-    (p) =>
-      p.id !== excludeId &&
-      normalizeNrp(p.nrp).toLowerCase() === normalized,
-  );
-}
-
 export function labelKeperluan(value: string) {
   switch (value) {
     case "IZIN_SENJATA":

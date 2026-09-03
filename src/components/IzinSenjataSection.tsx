@@ -21,6 +21,7 @@ export function IzinSenjataSection({
       <IzinForm
         peserta={peserta}
         rikkes={rikkes}
+        izin={izin}
         editing={editing}
         onCancelEdit={() => setEditing(null)}
       />

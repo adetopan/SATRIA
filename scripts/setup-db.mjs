@@ -60,12 +60,12 @@ async function main() {
     await client.query(
       `INSERT INTO peserta (
          id, nrp, nama, pangkat, satuan, jabatan, alamat_kantor, tanggal_lahir,
-         jenis_kelamin, no_hp, keperluan, status_rikkes, status_izin, created_at, updated_at
+         jenis_kelamin, no_hp, nomor_permohonan, keperluan, status_rikkes, status_izin, created_at, updated_at
        ) VALUES
-       ('p-001','85010234','Bripka Andi Wijaya','Bripka','Polres Metro Jakarta Pusat','Bamin','Jl. Kramat Raya, Jakarta Pusat','1990-04-12','L','081234567890','IZIN_SENJATA','PENDING','BELUM',$1,$1),
-       ('p-002','87020991','Aiptu Siti Rahmawati','Aiptu','Polda Metro Jaya','Penyidik','Jl. Jend. Sudirman, Jakarta Selatan','1987-09-21','P','081298765432','RIKKES_BERKALA','LAYAK','BELUM',$1,$1),
-       ('p-003','91031550','Briptu Dimas Pratama','Briptu','Polres Bekasi','Patroli','Jl. Ahmad Yani, Bekasi','1995-01-08','L','082112223333','IZIN_SENJATA','PENDING','DIAJUKAN',$1,$1),
-       ('p-004','83081568','Joko Agung Purnomo, S.I.K., M.Si., Ph.D.','AKBP','SSDM Polri','Asessor SDM Kepolisian Madya Tk. III SSDM Polri','Jalan Trunojoyo No.3, Kebayoran Baru, Jakarta Selatan','1983-08-15','L','081211112222','IZIN_SENJATA','LAYAK','DISETUJUI',$1,$1)`,
+       ('p-001','85010234','Bripka Andi Wijaya','Bripka','Polres Metro Jakarta Pusat','Bamin','Jl. Kramat Raya, Jakarta Pusat','1990-04-12','L','081234567890','','IZIN_SENJATA','PENDING','BELUM',$1,$1),
+       ('p-002','87020991','Aiptu Siti Rahmawati','Aiptu','Polda Metro Jaya','Penyidik','Jl. Jend. Sudirman, Jakarta Selatan','1987-09-21','P','081298765432','','RIKKES_BERKALA','LAYAK','BELUM',$1,$1),
+       ('p-003','91031550','Briptu Dimas Pratama','Briptu','Polres Bekasi','Patroli','Jl. Ahmad Yani, Bekasi','1995-01-08','L','082112223333','ISA/PMJ/112/2026','IZIN_SENJATA','PENDING','DIAJUKAN',$1,$1),
+       ('p-004','83081568','Joko Agung Purnomo, S.I.K., M.Si., Ph.D.','AKBP','SSDM Polri','Asessor SDM Kepolisian Madya Tk. III SSDM Polri','Jalan Trunojoyo No.3, Kebayoran Baru, Jakarta Selatan','1983-08-15','L','081211112222','ISA/SSDM/082/2026','IZIN_SENJATA','LAYAK','DISETUJUI',$1,$1)`,
       [now],
     );
 

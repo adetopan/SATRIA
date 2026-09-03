@@ -4,7 +4,7 @@ import { STAFF_ADMIN_ROLES } from "@/lib/roles";
 import { getPeserta, savePeserta, uid } from "@/lib/db";
 import { recordActivity } from "@/lib/activity-log";
 import { pesertaActivityLabel } from "@/lib/activity-labels";
-import { findPesertaByNrp, isValidNrp, normalizeNrp } from "@/lib/format";
+import { isValidNrp, normalizeNrp } from "@/lib/format";
 import type { Peserta } from "@/lib/types";
 
 export async function GET() {
@@ -37,6 +37,7 @@ export async function POST(request: Request) {
     tanggalLahir: String(body.tanggalLahir || ""),
     jenisKelamin: body.jenisKelamin === "P" ? "P" : "L",
     noHp: String(body.noHp || "").trim(),
+    nomorPermohonan: String(body.nomorPermohonan || "").trim(),
     keperluan: body.keperluan || "IZIN_SENJATA",
     statusRikkes: "PENDING",
     statusIzin: "BELUM",
@@ -56,15 +57,6 @@ export async function POST(request: Request) {
   }
 
   const list = await getPeserta();
-  const duplikat = findPesertaByNrp(peserta.nrp, list);
-  if (duplikat) {
-    return NextResponse.json(
-      {
-        error: `NRP ${peserta.nrp} sudah terdaftar atas nama ${duplikat.nama}.`,
-      },
-      { status: 409 },
-    );
-  }
 
   list.unshift(peserta);
   await savePeserta(list);

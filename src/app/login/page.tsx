@@ -60,7 +60,7 @@ export default function LoginPage() {
             id="username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            placeholder="admin, superadmin, atau mcu"
+            placeholder="admin dan mcu"
             autoComplete="username"
             required
           />

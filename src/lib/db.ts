@@ -51,6 +51,7 @@ const defaultPeserta: Peserta[] = [
     tanggalLahir: "1990-04-12",
     jenisKelamin: "L",
     noHp: "081234567890",
+    nomorPermohonan: "",
     keperluan: "IZIN_SENJATA",
     statusRikkes: "PENDING",
     statusIzin: "BELUM",
@@ -68,6 +69,7 @@ const defaultPeserta: Peserta[] = [
     tanggalLahir: "1987-09-21",
     jenisKelamin: "P",
     noHp: "081298765432",
+    nomorPermohonan: "",
     keperluan: "RIKKES_BERKALA",
     statusRikkes: "LAYAK",
     statusIzin: "BELUM",
@@ -85,6 +87,7 @@ const defaultPeserta: Peserta[] = [
     tanggalLahir: "1995-01-08",
     jenisKelamin: "L",
     noHp: "082112223333",
+    nomorPermohonan: "ISA/PMJ/112/2026",
     keperluan: "IZIN_SENJATA",
     statusRikkes: "PENDING",
     statusIzin: "DIAJUKAN",
@@ -102,6 +105,7 @@ const defaultPeserta: Peserta[] = [
     tanggalLahir: "1983-08-15",
     jenisKelamin: "L",
     noHp: "081211112222",
+    nomorPermohonan: "ISA/SSDM/082/2026",
     keperluan: "IZIN_SENJATA",
     statusRikkes: "LAYAK",
     statusIzin: "DISETUJUI",
@@ -215,6 +219,7 @@ function mapPeserta(row: Record<string, unknown>): Peserta {
     tanggalLahir: String(row.tanggal_lahir || ""),
     jenisKelamin: row.jenis_kelamin === "P" ? "P" : "L",
     noHp: String(row.no_hp || ""),
+    nomorPermohonan: String(row.nomor_permohonan || ""),
     keperluan: (row.keperluan as Peserta["keperluan"]) || "IZIN_SENJATA",
     statusRikkes: (row.status_rikkes as Peserta["statusRikkes"]) || "PENDING",
     statusIzin: (row.status_izin as Peserta["statusIzin"]) || "BELUM",
@@ -388,6 +393,26 @@ export async function ensureDb() {
      ADD COLUMN IF NOT EXISTS ttd_image_path TEXT NOT NULL DEFAULT '/specimen-ttd.png'`,
   );
   await query(
+    `ALTER TABLE peserta
+     ADD COLUMN IF NOT EXISTS nomor_permohonan TEXT NOT NULL DEFAULT ''`,
+  );
+  await query(
+    `ALTER TABLE peserta DROP CONSTRAINT IF EXISTS peserta_nrp_key`,
+  );
+  await query(`DROP INDEX IF EXISTS peserta_nrp_key`);
+  await query(
+    `UPDATE peserta p
+     SET nomor_permohonan = i.nomor_permohonan
+     FROM (
+       SELECT DISTINCT ON (peserta_id) peserta_id, nomor_permohonan
+       FROM izin_senjata
+       WHERE nomor_permohonan IS NOT NULL AND nomor_permohonan <> ''
+       ORDER BY peserta_id, created_at DESC
+     ) i
+     WHERE p.id = i.peserta_id
+       AND (p.nomor_permohonan IS NULL OR p.nomor_permohonan = '')`,
+  );
+  await query(
     `ALTER TABLE rikkes
      ADD COLUMN IF NOT EXISTS signer_snapshot JSONB`,
   );
@@ -454,8 +479,8 @@ async function upsertPeserta(p: Peserta) {
   await query(
     `INSERT INTO peserta (
        id, nrp, nama, pangkat, satuan, jabatan, alamat_kantor, tanggal_lahir,
-       jenis_kelamin, no_hp, keperluan, status_rikkes, status_izin, created_at, updated_at
-     ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+       jenis_kelamin, no_hp, nomor_permohonan, keperluan, status_rikkes, status_izin, created_at, updated_at
+     ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
      ON CONFLICT (id) DO UPDATE SET
        nrp = EXCLUDED.nrp,
        nama = EXCLUDED.nama,
@@ -466,6 +491,7 @@ async function upsertPeserta(p: Peserta) {
        tanggal_lahir = EXCLUDED.tanggal_lahir,
        jenis_kelamin = EXCLUDED.jenis_kelamin,
        no_hp = EXCLUDED.no_hp,
+       nomor_permohonan = EXCLUDED.nomor_permohonan,
        keperluan = EXCLUDED.keperluan,
        status_rikkes = EXCLUDED.status_rikkes,
        status_izin = EXCLUDED.status_izin,
@@ -481,6 +507,7 @@ async function upsertPeserta(p: Peserta) {
       p.tanggalLahir,
       p.jenisKelamin,
       p.noHp,
+      p.nomorPermohonan || "",
       p.keperluan,
       p.statusRikkes,
       p.statusIzin,

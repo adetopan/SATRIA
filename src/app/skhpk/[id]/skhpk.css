@@ -143,12 +143,10 @@
 .skhpk-watermark-text {
   position: absolute;
   inset: 0;
-  background-image:
-    url("/skhpk-watermark-tile.svg"),
-    url("/skhpk-watermark-tile.svg");
-  background-repeat: repeat, repeat;
-  background-size: 96px 18px, 96px 18px;
-  background-position: 0 0, 48px 9px;
+  background-image: url("/skhpk-watermark-tile.svg?v=8");
+  background-repeat: repeat;
+  background-size: 24mm 4mm;
+  background-position: 0 0;
   opacity: 0.42;
 }
 

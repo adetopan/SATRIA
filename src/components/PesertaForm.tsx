@@ -1,9 +1,9 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Peserta } from "@/lib/types";
-import { findPesertaByNrp, isValidNrp, normalizeNrp } from "@/lib/format";
+import { isValidNrp, normalizeNrp } from "@/lib/format";
 import { SearchableSelect } from "@/components/SearchableSelect";
 
 const empty = {
@@ -16,6 +16,7 @@ const empty = {
   tanggalLahir: "",
   jenisKelamin: "L",
   noHp: "",
+  nomorPermohonan: "",
   keperluan: "IZIN_SENJATA",
 };
 
@@ -93,11 +94,9 @@ const SATUAN_POLRI = [
 export function PesertaForm({
   initial,
   mode = "create",
-  existingPeserta = [],
 }: {
   initial?: Peserta;
   mode?: "create" | "edit";
-  existingPeserta?: Peserta[];
 }) {
   const router = useRouter();
 
@@ -110,16 +109,7 @@ export function PesertaForm({
   );
   const [loading, setLoading] = useState(false);
 
-  const duplikatNrp = useMemo(
-    () => findPesertaByNrp(form.nrp, existingPeserta, initial?.id),
-    [form.nrp, existingPeserta, initial?.id],
-  );
-
   const nrpValid8Digit = isValidNrp(form.nrp);
-
-  function pesanDuplikatNrp(duplikat: Peserta) {
-    return `NRP ${duplikat.nrp} sudah terdaftar atas nama ${duplikat.nama}. Tidak bisa menambah data peserta yang sama.`;
-  }
 
   function pesanNrp(value: string) {
     const nrp = normalizeNrp(value);
@@ -127,8 +117,7 @@ export function PesertaForm({
     if (!isValidNrp(nrp)) {
       return "NRP harus 8 digit angka.";
     }
-    const duplikat = findPesertaByNrp(nrp, existingPeserta, initial?.id);
-    return duplikat ? pesanDuplikatNrp(duplikat) : "";
+    return "";
   }
 
   function set<K extends keyof typeof form>(
@@ -155,13 +144,6 @@ export function PesertaForm({
 
     if (!isValidNrp(form.nrp)) {
       const pesan = "NRP harus 8 digit angka.";
-      setNrpError(pesan);
-      setError(pesan);
-      return;
-    }
-
-    if (duplikatNrp) {
-      const pesan = pesanDuplikatNrp(duplikatNrp);
       setNrpError(pesan);
       setError(pesan);
       return;
@@ -281,6 +263,22 @@ export function PesertaForm({
             }
             placeholder="Masukkan nama lengkap"
             required
+          />
+        </div>
+
+        {/* =============================== */}
+        {/* NOMOR PERMOHONAN */}
+        {/* =============================== */}
+
+        <div className="field">
+          <label>Nomor Permohonan</label>
+
+          <input
+            value={form.nomorPermohonan || ""}
+            onChange={(e) =>
+              set("nomorPermohonan", e.target.value)
+            }
+            placeholder="Contoh: ISA/SSDM/082/2026"
           />
         </div>
 
@@ -410,7 +408,7 @@ export function PesertaForm({
           style={{
             width: "auto",
           }}
-          disabled={loading || Boolean(duplikatNrp) || !nrpValid8Digit}
+          disabled={loading || !nrpValid8Digit}
         >
           {loading
             ? "Menyimpan..."

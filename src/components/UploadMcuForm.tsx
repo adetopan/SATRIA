@@ -33,13 +33,25 @@ export function UploadMcuForm({
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const sudahMcuIds = useMemo(
+    () => new Set(rikkes.map((r) => r.pesertaId)),
+    [rikkes],
+  );
+
+  const pesertaBelumMcu = useMemo(() => {
+    return peserta.filter((p) => {
+      if (editing && p.id === editing.pesertaId) return true;
+      return !sudahMcuIds.has(p.id);
+    });
+  }, [peserta, sudahMcuIds, editing]);
+
   const pesertaOptions = useMemo(
     () =>
-      peserta.map((p) => ({
+      pesertaBelumMcu.map((p) => ({
         value: p.id,
-        label: `${p.nama} — NRP ${p.nrp} (${p.pangkat})`,
+        label: `${p.nama} — NRP ${p.nrp} (${p.pangkat}) — Permohonan ${p.nomorPermohonan || "-"}`,
       })),
-    [peserta]
+    [pesertaBelumMcu],
   );
 
   const duplicateTanggal = useMemo(
@@ -170,6 +182,17 @@ export function UploadMcuForm({
     );
   }
 
+  if (pesertaBelumMcu.length === 0) {
+    return (
+      <div className="panel">
+        <div className="empty">
+          Semua peserta sudah memiliki hasil MCU. Tidak ada peserta
+          yang dapat diunggah saat ini.
+        </div>
+      </div>
+    );
+  }
+
   return (
     <form className="panel" onSubmit={onSubmit} ref={formRef}>
       <div className="panel-head">
@@ -180,7 +203,7 @@ export function UploadMcuForm({
           <p>
             {editing
               ? "Ubah data pemeriksaan, lalu simpan kembali. Berkas cukup diisi jika ingin diganti."
-              : "Akses khusus MCU RS Polri untuk mengunggah hasil pemeriksaan peserta ke aplikasi SATRIA."}
+              : "Hanya peserta yang belum MCU yang dapat dipilih. Cari berdasarkan nama, NRP, atau nomor permohonan."}
           </p>
         </div>
       </div>
@@ -198,7 +221,7 @@ export function UploadMcuForm({
           label="Pilih Peserta"
           value={pesertaId}
           options={pesertaOptions}
-          placeholder="Ketik nama atau NRP..."
+          placeholder="Ketik nama, NRP, atau nomor permohonan..."
           required
           full
           onChange={handlePesertaChange}

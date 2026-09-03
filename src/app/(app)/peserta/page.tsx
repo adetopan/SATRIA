@@ -18,7 +18,7 @@ export default async function PesertaPage() {
       ====================================== */}
 
       {isAdmin ? (
-        <PesertaForm existingPeserta={peserta} />
+        <PesertaForm />
       ) : null}
 
       {/* =====================================

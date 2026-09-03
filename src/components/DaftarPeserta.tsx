@@ -358,6 +358,7 @@ export function DaftarPeserta({ peserta }: Props) {
                 <tr>
                   <th>Nama</th>
                   <th>NRP</th>
+                  <th>Nomor Permohonan</th>
                   <th>Pangkat</th>
                   <th>Jabatan</th>
                   <th>Satuan</th>
@@ -382,6 +383,7 @@ export function DaftarPeserta({ peserta }: Props) {
                       </td>
 
                       <td>{p.nrp}</td>
+                      <td>{p.nomorPermohonan || "-"}</td>
                       <td>{p.pangkat || "-"}</td>
                       <td>{p.jabatan || "-"}</td>
                       <td>{p.satuan || "-"}</td>

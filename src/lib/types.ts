@@ -42,6 +42,7 @@ export type Peserta = {
   tanggalLahir: string;
   jenisKelamin: "L" | "P";
   noHp: string;
+  nomorPermohonan: string;
   keperluan: "IZIN_SENJATA" | "RIKKES_BERKALA" | "LAINNYA";
   statusRikkes: HasilRikkes;
   statusIzin: "BELUM" | "DIAJUKAN" | "DISETUJUI" | "DITOLAK";

@@ -37,10 +37,23 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Peserta tidak ditemukan" }, { status: 404 });
   }
 
+  const nomorPermohonan = String(
+    pesertaList[index].nomorPermohonan || "",
+  ).trim();
+  if (!nomorPermohonan) {
+    return NextResponse.json(
+      {
+        error:
+          "Nomor permohonan belum diisi pada Data Peserta. Isi terlebih dahulu di menu Data Peserta.",
+      },
+      { status: 400 },
+    );
+  }
+
   const record: IzinSenjata = {
     id: uid("i"),
     pesertaId,
-    nomorPermohonan: String(body.nomorPermohonan || "").trim(),
+    nomorPermohonan,
     jenisSenjata: String(body.jenisSenjata || "").trim(),
     keperluan: String(body.keperluan || "").trim(),
     tanggalPengajuan: String(body.tanggalPengajuan || now.slice(0, 10)),
@@ -52,14 +65,23 @@ export async function POST(request: Request) {
     updatedAt: now,
   };
 
-  if (!record.nomorPermohonan || !record.jenisSenjata) {
+  if (!record.jenisSenjata) {
     return NextResponse.json(
-      { error: "Nomor permohonan dan jenis senjata wajib diisi." },
+      { error: "Jenis senjata wajib diisi." },
       { status: 400 },
     );
   }
 
   const list = await getIzin();
+  if (list.some((item) => item.pesertaId === pesertaId)) {
+    return NextResponse.json(
+      {
+        error:
+          "Peserta ini sudah memiliki pengajuan izin senjata api. Hapus pengajuan yang ada jika ingin mengajukan ulang.",
+      },
+      { status: 400 },
+    );
+  }
   list.unshift(record);
   await saveIzin(list);
 
