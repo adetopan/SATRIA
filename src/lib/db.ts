@@ -2,7 +2,13 @@ import { promises as fs } from "fs";
 import path from "path";
 import { ensureUploadDir } from "@/lib/uploads";
 import { query } from "./pg";
-import { buildBarcodeValue, buildNomorSkhpk, parseSignerSnapshot, SKHPK_SIGNER } from "./skhpk";
+import {
+  buildBarcodeValue,
+  buildNomorSkhpk,
+  parseSignerSnapshot,
+  rebaseSkhpkNomorList,
+  SKHPK_SIGNER,
+} from "./skhpk";
 import { parseRole } from "./roles";
 import type { ActivityLog, IzinSenjata, Peserta, Rikkes, SkhpkSigner, User } from "./types";
 
@@ -472,6 +478,9 @@ export async function ensureDb() {
     );
   }
 
+  const rikkesRows = await query("SELECT * FROM rikkes");
+  await persistRebasedRikkes(rikkesRows.rows.map((row) => mapRikkes(row)));
+
   ensured = true;
 }
 
@@ -658,10 +667,19 @@ export async function savePeserta(data: Peserta[]) {
   for (const p of data) await upsertPeserta(p);
 }
 
+async function persistRebasedRikkes(list: Rikkes[]) {
+  const next = rebaseSkhpkNomorList(list);
+  const changed = next.filter((r, i) => r !== list[i]);
+  if (changed.length) {
+    await Promise.all(changed.map((r) => upsertRikkes(r)));
+  }
+  return next;
+}
+
 export async function getRikkes() {
   await ensureDb();
   const result = await query("SELECT * FROM rikkes ORDER BY created_at DESC");
-  return result.rows.map((row) => mapRikkes(row));
+  return persistRebasedRikkes(result.rows.map((row) => mapRikkes(row)));
 }
 
 export async function saveRikkes(data: Rikkes[]) {

@@ -90,19 +90,63 @@ export function formatShortDateId(dateStr: string) {
   });
 }
 
+/** Nomor urut SKHPK SATRIA dimulai dari 83 (lanjutan register yang sudah terbit). */
+export const SKHPK_SEQ_START = 83;
+
 export function buildNomorSkhpk(seq: number, tanggal: string) {
   const year = new Date(tanggal).getFullYear() || new Date().getFullYear();
   return `SKHPK/ ${seq} /${romanMonth(tanggal)}/KES.15./${year}/DOKKES`;
 }
 
+export function parseSkhpkSeq(nomor?: string) {
+  const m = (nomor || "").match(/SKHPK\/\s*(\d+)\s*\//i);
+  return m ? Number(m[1]) : 0;
+}
+
+/** Run 1, 2, 3, ... yang terbit sebelum counter digeser ke 83. */
+function oneBasedRunEnd(seqs: number[]) {
+  const set = new Set(seqs.filter((n) => n > 0));
+  let end = 0;
+  while (set.has(end + 1)) end += 1;
+  return end;
+}
+
+function shiftedSkhpkSeq(seq: number, runEnd: number) {
+  if (seq >= 1 && seq <= runEnd) return SKHPK_SEQ_START + seq - 1;
+  return seq;
+}
+
 export function nextSkhpkSeq(rikkes: Rikkes[]) {
-  const nums = rikkes
-    .map((r) => {
-      const m = (r.nomorSkhpk || "").match(/SKHPK\/\s*(\d+)\s*\//i);
-      return m ? Number(m[1]) : 0;
-    })
-    .filter((n) => n > 0);
-  return (nums.length ? Math.max(...nums) : 0) + 1;
+  const nums = rikkes.map((r) => parseSkhpkSeq(r.nomorSkhpk)).filter((n) => n > 0);
+  const runEnd = oneBasedRunEnd(nums);
+  const effective = nums.map((n) => shiftedSkhpkSeq(n, runEnd));
+  const maxExisting = effective.length ? Math.max(...effective) : 0;
+  return Math.max(maxExisting + 1, SKHPK_SEQ_START);
+}
+
+export function rebaseSkhpkNomorList(rikkes: Rikkes[]): Rikkes[] {
+  const nums = rikkes.map((r) => parseSkhpkSeq(r.nomorSkhpk));
+  const runEnd = oneBasedRunEnd(nums);
+  if (runEnd === 0) return rikkes;
+
+  return rikkes.map((r) => {
+    const seq = parseSkhpkSeq(r.nomorSkhpk);
+    if (seq < 1 || seq > runEnd) return r;
+
+    const nomorSkhpk = buildNomorSkhpk(
+      shiftedSkhpkSeq(seq, runEnd),
+      r.tanggalPemeriksaan || r.tanggalTerbit || new Date().toISOString(),
+    );
+    const oldCompact = (r.nomorSkhpk || "").replace(/\s+/g, "");
+    const newCompact = nomorSkhpk.replace(/\s+/g, "");
+    return {
+      ...r,
+      nomorSkhpk,
+      barcodeValue: r.barcodeValue
+        ? r.barcodeValue.replace(oldCompact, newCompact)
+        : r.barcodeValue,
+    };
+  });
 }
 
 export function buildBarcodeValue(rikkes: Rikkes, peserta: Peserta) {
