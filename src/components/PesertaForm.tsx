@@ -101,6 +101,7 @@ export function PesertaForm({
   const router = useRouter();
 
   const [form, setForm] = useState(initial || empty);
+  const [suratPermohonan, setSuratPermohonan] = useState<File | null>(null);
   const [error, setError] = useState("");
   const [nrpError, setNrpError] = useState(() =>
     initial?.nrp && !isValidNrp(initial.nrp)
@@ -153,16 +154,29 @@ export function PesertaForm({
     setError("");
 
     try {
+      const payload = new FormData();
+      payload.set("nrp", form.nrp);
+      payload.set("nama", form.nama);
+      payload.set("pangkat", form.pangkat);
+      payload.set("satuan", form.satuan);
+      payload.set("jabatan", form.jabatan);
+      payload.set("alamatKantor", form.alamatKantor || "");
+      payload.set("tanggalLahir", form.tanggalLahir || "");
+      payload.set("jenisKelamin", form.jenisKelamin);
+      payload.set("noHp", form.noHp || "");
+      payload.set("nomorPermohonan", form.nomorPermohonan || "");
+      payload.set("keperluan", form.keperluan);
+      if (suratPermohonan) {
+        payload.set("suratPermohonan", suratPermohonan);
+      }
+
       const res = await fetch(
         mode === "edit" && initial
           ? `/api/peserta/${initial.id}`
           : "/api/peserta",
         {
           method: mode === "edit" ? "PUT" : "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(form),
+          body: payload,
         }
       );
 
@@ -282,6 +296,38 @@ export function PesertaForm({
           />
         </div>
 
+        <div className="field full">
+          <label>
+            {mode === "edit"
+              ? "Surat Permohonan (kosongkan jika tidak diganti)"
+              : "Surat Permohonan (PDF/JPG/PNG)"}
+          </label>
+          <input
+            type="file"
+            accept=".pdf,image/jpeg,image/png,image/webp"
+            onChange={(e) => {
+              setSuratPermohonan(e.target.files?.[0] || null);
+            }}
+          />
+          {suratPermohonan ? (
+            <small style={{ color: "var(--satria-muted)" }}>
+              File dipilih: {suratPermohonan.name}
+            </small>
+          ) : initial?.suratPermohonanFilePath ? (
+            <small style={{ color: "var(--satria-muted)" }}>
+              Berkas saat ini:{" "}
+              <a
+                href={initial.suratPermohonanFilePath}
+                target="_blank"
+                rel="noreferrer"
+                className="linkish"
+              >
+                {initial.suratPermohonanFileName || "Lihat surat permohonan"}
+              </a>
+            </small>
+          ) : null}
+        </div>
+
         {/* =============================== */}
         {/* PANGKAT */}
         {/* =============================== */}
@@ -349,7 +395,7 @@ export function PesertaForm({
         {/* TANGGAL LAHIR */}
         {/* =============================== */}
 
-        <div className="field">
+        {/* <div className="field">
           <label>Tanggal Lahir</label>
 
           <input
@@ -362,7 +408,7 @@ export function PesertaForm({
               )
             }
           />
-        </div>
+        </div> */}
 
         {/* =============================== */}
         {/* JENIS KELAMIN */}

@@ -17,10 +17,25 @@ import {
 } from "@/lib/skhpk";
 import "./skhpk.css";
 
-type Params = { params: Promise<{ id: string }> };
+type Params = {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ tanpaTtd?: string | string[]; mcu?: string | string[] }>;
+};
 
-export default async function SkhpkPage({ params }: Params) {
+function isFlagParam(value: string | string[] | undefined) {
+  const raw = Array.isArray(value) ? value[0] : value;
+  return ["1", "true", "ya"].includes(String(raw || "").toLowerCase());
+}
+
+function isImageBerkas(path: string) {
+  return /\.(jpe?g|png|webp)$/i.test(path);
+}
+
+export default async function SkhpkPage({ params, searchParams }: Params) {
   const { id } = await params;
+  const query = await searchParams;
+  const tanpaTtd = isFlagParam(query.tanpaTtd);
+  const tampilkanMcu = isFlagParam(query.mcu);
   const [session, rikkesList, pesertaList, izinList] = await Promise.all([
     getSession(),
     getRikkes(),
@@ -44,7 +59,12 @@ export default async function SkhpkPage({ params }: Params) {
     notFound();
   }
 
-  if (!canPrintSkhpk(rikkes) && rikkes.hasil !== "LAYAK") {
+  const bolehLihatSkhpk =
+    canPrintSkhpk(rikkes) ||
+    rikkes.hasil === "LAYAK" ||
+    Boolean(tanpaTtd && session);
+
+  if (!bolehLihatSkhpk) {
     return (
       <div className="skhpk-guard">
         <p>
@@ -93,16 +113,24 @@ export default async function SkhpkPage({ params }: Params) {
       {/* ================= TOOLBAR ================= */}
       <div className="skhpk-toolbar no-print">
         <div className="skhpk-toolbar-copy">
-          <p className="eyebrow">Cetakan Resmi SATRIA</p>
+          <p className="eyebrow">
+            {tampilkanMcu ? "SKHPK & Berkas MCU" : "Cetakan Resmi SATRIA"}
+          </p>
 
           <h1>
-            Surat Keterangan Hasil Pemeriksaan Kesehatan
+            {tampilkanMcu
+              ? "Surat Keterangan Hasil Pemeriksaan Kesehatan dan Berkas MCU"
+              : "Surat Keterangan Hasil Pemeriksaan Kesehatan"}
           </h1>
 
           <p>
-            {session
-              ? "TTD diganti QR code specimen tanda tangan."
-              : "Gunakan tombol Cetak untuk menyimpan atau mencetak surat."}
+            {tampilkanMcu
+              ? "SKHPK ditampilkan lebih dulu, lalu berkas hasil MCU di halaman berikutnya."
+              : tanpaTtd
+                ? "Pratinjau SKHPK tanpa tanda tangan digital (QR)."
+                : session
+                  ? "TTD diganti QR code specimen tanda tangan."
+                  : "Gunakan tombol Cetak untuk menyimpan atau mencetak surat."}
           </p>
         </div>
 
@@ -116,7 +144,9 @@ export default async function SkhpkPage({ params }: Params) {
             </Link>
           ) : null}
 
-          <PrintButton />
+          <PrintButton
+            label={tanpaTtd ? "Cetak tanpa TTD" : "Cetak SKHPK"}
+          />
         </div>
       </div>
 
@@ -364,17 +394,21 @@ export default async function SkhpkPage({ params }: Params) {
               {signer.jabatan}
             </p>
 
-            {/* QR SPECIMEN TTD */}
-            <div className="skhpk-qr-box">
-              <QrCode
-                value={qrUrl}
-                className="skhpk-qr"
-                size={108}
-              />
-
-              {/* <p className="skhpk-qr-caption">
-                Pindai QR untuk specimen tanda tangan
-              </p> */}
+            {/* QR SPECIMEN TTD — disembunyikan pada pratinjau tanpa TTD */}
+            <div
+              className={
+                tanpaTtd
+                  ? "skhpk-qr-box skhpk-qr-box-empty"
+                  : "skhpk-qr-box"
+              }
+            >
+              {tanpaTtd ? null : (
+                <QrCode
+                  value={qrUrl}
+                  className="skhpk-qr"
+                  size={108}
+                />
+              )}
             </div>
 
             {/* NAMA */}
@@ -393,6 +427,37 @@ export default async function SkhpkPage({ params }: Params) {
       </article>
         </div>
       </div>
+
+      {tampilkanMcu ? (
+        <section className="skhpk-mcu-panel no-print">
+          <div className="skhpk-mcu-panel-head">
+            <h2>Berkas MCU</h2>
+            <p>
+              {rikkes.fileName
+                ? rikkes.fileName
+                : "Hasil pemeriksaan yang diunggah di Upload MCU."}
+            </p>
+          </div>
+          {rikkes.filePath ? (
+            isImageBerkas(rikkes.filePath) ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={rikkes.filePath}
+                alt={rikkes.fileName || "Berkas MCU"}
+                className="skhpk-mcu-image"
+              />
+            ) : (
+              <iframe
+                src={rikkes.filePath}
+                title={rikkes.fileName || "Berkas MCU"}
+                className="skhpk-mcu-frame"
+              />
+            )
+          ) : (
+            <div className="empty">Berkas MCU belum diunggah.</div>
+          )}
+        </section>
+      ) : null}
 
     </div>
   );

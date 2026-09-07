@@ -5,6 +5,10 @@ import { getPeserta, savePeserta, uid } from "@/lib/db";
 import { recordActivity } from "@/lib/activity-log";
 import { pesertaActivityLabel } from "@/lib/activity-labels";
 import { isValidNrp, normalizeNrp } from "@/lib/format";
+import {
+  permohonanFileError,
+  savePermohonanFile,
+} from "@/lib/permohonan-file";
 import type { Peserta } from "@/lib/types";
 
 export async function GET() {
@@ -17,14 +21,52 @@ export async function GET() {
   return NextResponse.json({ data });
 }
 
+async function readPesertaInput(request: Request) {
+  const contentType = request.headers.get("content-type") || "";
+  if (contentType.includes("multipart/form-data")) {
+    const form = await request.formData();
+    const uploaded = form.get("suratPermohonan");
+    return {
+      body: {
+        nrp: String(form.get("nrp") || ""),
+        nama: String(form.get("nama") || ""),
+        pangkat: String(form.get("pangkat") || ""),
+        satuan: String(form.get("satuan") || ""),
+        jabatan: String(form.get("jabatan") || ""),
+        alamatKantor: String(form.get("alamatKantor") || ""),
+        tanggalLahir: String(form.get("tanggalLahir") || ""),
+        jenisKelamin: String(form.get("jenisKelamin") || ""),
+        noHp: String(form.get("noHp") || ""),
+        nomorPermohonan: String(form.get("nomorPermohonan") || ""),
+        keperluan: String(form.get("keperluan") || ""),
+      },
+      file: uploaded instanceof File && uploaded.size > 0 ? uploaded : null,
+    };
+  }
+
+  return { body: await request.json(), file: null as File | null };
+}
+
 export async function POST(request: Request) {
   const session = await requireSession(STAFF_ADMIN_ROLES);
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await request.json();
+  const { body, file } = await readPesertaInput(request);
   const now = new Date().toISOString();
+
+  let suratPermohonanFileName = "";
+  let suratPermohonanFilePath = "";
+  if (file) {
+    const fileError = permohonanFileError(file);
+    if (fileError) {
+      return NextResponse.json({ error: fileError }, { status: 400 });
+    }
+    const stored = await savePermohonanFile(file);
+    suratPermohonanFileName = stored.fileName;
+    suratPermohonanFilePath = stored.filePath;
+  }
 
   const peserta: Peserta = {
     id: uid("p"),
@@ -38,7 +80,9 @@ export async function POST(request: Request) {
     jenisKelamin: body.jenisKelamin === "P" ? "P" : "L",
     noHp: String(body.noHp || "").trim(),
     nomorPermohonan: String(body.nomorPermohonan || "").trim(),
-    keperluan: body.keperluan || "IZIN_SENJATA",
+    suratPermohonanFileName,
+    suratPermohonanFilePath,
+    keperluan: (body.keperluan as Peserta["keperluan"]) || "IZIN_SENJATA",
     statusRikkes: "PENDING",
     statusIzin: "BELUM",
     createdAt: now,

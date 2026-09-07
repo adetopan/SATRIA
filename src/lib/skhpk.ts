@@ -4,7 +4,7 @@ export const SKHPK_SIGNER = {
   atasNama: "a.n. KEPALA PUSAT KEDOKTERAN DAN KESEHATAN POLRI",
   jabatan: "KAROKESPOL",
   nama: "Dr. dr.MOHAMMAD KHUSNAN MARZUKI, M.M., M.H.",
-  pangkat: "BRIGADIR JENDRAL",
+  pangkat: "BRIGADIR JENDRAL POLISI",
   nrp: "70090417",
   jenisKelamin: "LAKI-LAKI",
   satuan: "Pusdokkes Polri",

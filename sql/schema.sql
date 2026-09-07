@@ -19,6 +19,8 @@ CREATE TABLE IF NOT EXISTS peserta (
   jenis_kelamin TEXT NOT NULL CHECK (jenis_kelamin IN ('L', 'P')),
   no_hp TEXT NOT NULL DEFAULT '',
   nomor_permohonan TEXT NOT NULL DEFAULT '',
+  surat_permohonan_file_name TEXT NOT NULL DEFAULT '',
+  surat_permohonan_file_path TEXT NOT NULL DEFAULT '',
   keperluan TEXT NOT NULL DEFAULT 'IZIN_SENJATA',
   status_rikkes TEXT NOT NULL DEFAULT 'PENDING',
   status_izin TEXT NOT NULL DEFAULT 'BELUM',

@@ -24,6 +24,9 @@ export default async function PesertaDetailPage({ params }: Params) {
 
   const rikkes = rikkesAll.filter((r) => r.pesertaId === id);
   const izin = izinAll.filter((i) => i.pesertaId === id);
+  const pesertaNrpSama = pesertaList.filter(
+    (p) => p.id !== peserta.id && p.nrp && p.nrp === peserta.nrp,
+  );
 
   return (
     <div>
@@ -52,6 +55,23 @@ export default async function PesertaDetailPage({ params }: Params) {
           <div>
             <dt>Nomor Permohonan</dt>
             <dd>{peserta.nomorPermohonan || "-"}</dd>
+          </div>
+          <div>
+            <dt>Surat Permohonan</dt>
+            <dd>
+              {peserta.suratPermohonanFilePath ? (
+                <a
+                  href={peserta.suratPermohonanFilePath}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="linkish"
+                >
+                  {peserta.suratPermohonanFileName || "Lihat berkas"}
+                </a>
+              ) : (
+                "-"
+              )}
+            </dd>
           </div>
           <div>
             <dt>Tanggal Lahir</dt>
@@ -83,6 +103,67 @@ export default async function PesertaDetailPage({ params }: Params) {
           </div> */}
         </dl>
       </section>
+
+      {pesertaNrpSama.length > 0 ? (
+        <section className="panel">
+          <div className="panel-head">
+            <div>
+              <h2>Peserta dengan NRP yang sama</h2>
+              <p>
+                Ditemukan {pesertaNrpSama.length} data peserta lain dengan NRP{" "}
+                {peserta.nrp}.
+              </p>
+            </div>
+          </div>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Nama</th>
+                  <th>Pangkat</th>
+                  <th>Jabatan</th>
+                  <th>Satuan</th>
+                  <th>Nomor Permohonan</th>
+                  <th>Surat Permohonan</th>
+                  <th>Status Izin</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pesertaNrpSama.map((p) => (
+                  <tr key={p.id}>
+                    <td>
+                      <Link href={`/peserta/${p.id}`} className="linkish">
+                        {p.nama}
+                      </Link>
+                    </td>
+                    <td>{p.pangkat || "-"}</td>
+                    <td>{p.jabatan || "-"}</td>
+                    <td>{p.satuan || "-"}</td>
+                    <td>{p.nomorPermohonan || "-"}</td>
+                    <td>
+                      {p.suratPermohonanFilePath ? (
+                        <a
+                          href={p.suratPermohonanFilePath}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="linkish"
+                        >
+                          {p.suratPermohonanFileName || "Lihat berkas"}
+                        </a>
+                      ) : (
+                        "-"
+                      )}
+                    </td>
+                    <td>
+                      <IzinBadge value={p.statusIzin} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ) : null}
 
       <section className="panel">
         <div className="panel-head">

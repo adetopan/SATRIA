@@ -468,7 +468,7 @@ export function RiwayatIzinSenjata({
                 </th>
 
                 <th>
-                  Berkas MCU
+                  Berkas
                 </th>
 
                 <th>
@@ -583,28 +583,28 @@ export function RiwayatIzinSenjata({
                       </div>
                     </td>
 
-                    {/* MCU */}
+                    {/* BERKAS MCU + SKHPK */}
                     <td>
-                      {r?.filePath ? (
+                      {r ? (
                         <a
-                          href={
-                            r.filePath
-                          }
+                          href={`/skhpk/${r.id}?tanpaTtd=1&mcu=1`}
                           target="_blank"
                           rel="noreferrer"
-                          className="linkish"
+                          className="btn-secondary"
+                          style={{
+                            width: "auto",
+                            whiteSpace: "nowrap",
+                          }}
                         >
-                          {r.fileName ||
-                            "Lihat berkas"}
+                          Lihat Berkas
                         </a>
                       ) : (
                         <span
                           style={{
-                            color:
-                              "var(--satria-muted)",
+                            color: "var(--satria-muted)",
                           }}
                         >
-                          Belum ada
+                          Belum ada MCU
                         </span>
                       )}
                     </td>

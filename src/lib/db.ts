@@ -58,6 +58,8 @@ const defaultPeserta: Peserta[] = [
     jenisKelamin: "L",
     noHp: "081234567890",
     nomorPermohonan: "",
+    suratPermohonanFileName: "",
+    suratPermohonanFilePath: "",
     keperluan: "IZIN_SENJATA",
     statusRikkes: "PENDING",
     statusIzin: "BELUM",
@@ -76,6 +78,8 @@ const defaultPeserta: Peserta[] = [
     jenisKelamin: "P",
     noHp: "081298765432",
     nomorPermohonan: "",
+    suratPermohonanFileName: "",
+    suratPermohonanFilePath: "",
     keperluan: "RIKKES_BERKALA",
     statusRikkes: "LAYAK",
     statusIzin: "BELUM",
@@ -94,6 +98,8 @@ const defaultPeserta: Peserta[] = [
     jenisKelamin: "L",
     noHp: "082112223333",
     nomorPermohonan: "ISA/PMJ/112/2026",
+    suratPermohonanFileName: "",
+    suratPermohonanFilePath: "",
     keperluan: "IZIN_SENJATA",
     statusRikkes: "PENDING",
     statusIzin: "DIAJUKAN",
@@ -112,6 +118,8 @@ const defaultPeserta: Peserta[] = [
     jenisKelamin: "L",
     noHp: "081211112222",
     nomorPermohonan: "ISA/SSDM/082/2026",
+    suratPermohonanFileName: "",
+    suratPermohonanFilePath: "",
     keperluan: "IZIN_SENJATA",
     statusRikkes: "LAYAK",
     statusIzin: "DISETUJUI",
@@ -226,6 +234,8 @@ function mapPeserta(row: Record<string, unknown>): Peserta {
     jenisKelamin: row.jenis_kelamin === "P" ? "P" : "L",
     noHp: String(row.no_hp || ""),
     nomorPermohonan: String(row.nomor_permohonan || ""),
+    suratPermohonanFileName: String(row.surat_permohonan_file_name || ""),
+    suratPermohonanFilePath: String(row.surat_permohonan_file_path || ""),
     keperluan: (row.keperluan as Peserta["keperluan"]) || "IZIN_SENJATA",
     statusRikkes: (row.status_rikkes as Peserta["statusRikkes"]) || "PENDING",
     statusIzin: (row.status_izin as Peserta["statusIzin"]) || "BELUM",
@@ -403,6 +413,14 @@ export async function ensureDb() {
      ADD COLUMN IF NOT EXISTS nomor_permohonan TEXT NOT NULL DEFAULT ''`,
   );
   await query(
+    `ALTER TABLE peserta
+     ADD COLUMN IF NOT EXISTS surat_permohonan_file_name TEXT NOT NULL DEFAULT ''`,
+  );
+  await query(
+    `ALTER TABLE peserta
+     ADD COLUMN IF NOT EXISTS surat_permohonan_file_path TEXT NOT NULL DEFAULT ''`,
+  );
+  await query(
     `ALTER TABLE peserta DROP CONSTRAINT IF EXISTS peserta_nrp_key`,
   );
   await query(`DROP INDEX IF EXISTS peserta_nrp_key`);
@@ -488,8 +506,9 @@ async function upsertPeserta(p: Peserta) {
   await query(
     `INSERT INTO peserta (
        id, nrp, nama, pangkat, satuan, jabatan, alamat_kantor, tanggal_lahir,
-       jenis_kelamin, no_hp, nomor_permohonan, keperluan, status_rikkes, status_izin, created_at, updated_at
-     ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
+       jenis_kelamin, no_hp, nomor_permohonan, surat_permohonan_file_name,
+       surat_permohonan_file_path, keperluan, status_rikkes, status_izin, created_at, updated_at
+     ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
      ON CONFLICT (id) DO UPDATE SET
        nrp = EXCLUDED.nrp,
        nama = EXCLUDED.nama,
@@ -501,6 +520,8 @@ async function upsertPeserta(p: Peserta) {
        jenis_kelamin = EXCLUDED.jenis_kelamin,
        no_hp = EXCLUDED.no_hp,
        nomor_permohonan = EXCLUDED.nomor_permohonan,
+       surat_permohonan_file_name = EXCLUDED.surat_permohonan_file_name,
+       surat_permohonan_file_path = EXCLUDED.surat_permohonan_file_path,
        keperluan = EXCLUDED.keperluan,
        status_rikkes = EXCLUDED.status_rikkes,
        status_izin = EXCLUDED.status_izin,
@@ -517,6 +538,8 @@ async function upsertPeserta(p: Peserta) {
       p.jenisKelamin,
       p.noHp,
       p.nomorPermohonan || "",
+      p.suratPermohonanFileName || "",
+      p.suratPermohonanFilePath || "",
       p.keperluan,
       p.statusRikkes,
       p.statusIzin,

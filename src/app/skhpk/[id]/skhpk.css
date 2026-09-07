@@ -57,6 +57,58 @@
 
 
 /* =========================================================
+   BERKAS MCU (HALAMAN GABUNGAN)
+   ========================================================= */
+
+.skhpk-mcu-panel {
+  width: min(100%, 210mm);
+  margin: 0 auto 1.2rem;
+  background: #fff;
+  border: 1px solid var(--satria-line);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.skhpk-mcu-panel-head {
+  padding: 0.85rem 1.1rem 0.7rem;
+  border-bottom: 1px solid var(--satria-line);
+}
+
+.skhpk-mcu-panel-head h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  color: var(--satria-green-deep);
+}
+
+.skhpk-mcu-panel-head p {
+  margin: 0.2rem 0 0;
+  color: var(--satria-muted);
+  font-size: 0.88rem;
+}
+
+.skhpk-mcu-frame {
+  display: block;
+  width: 100%;
+  height: min(82vh, 920px);
+  border: 0;
+  background: #f4f4f4;
+}
+
+.skhpk-mcu-image {
+  display: block;
+  width: 100%;
+  max-height: min(82vh, 920px);
+  object-fit: contain;
+  background: #f4f4f4;
+}
+
+.skhpk-mcu-panel .empty {
+  margin: 0;
+  padding: 1.4rem 1.1rem;
+}
+
+
+/* =========================================================
    GUARD
    ========================================================= */
 
@@ -520,6 +572,10 @@
   height: 92px;
 
   display: block;
+}
+
+.skhpk-qr-box-empty {
+  min-height: 92px;
 }
 
 .skhpk-qr-caption {

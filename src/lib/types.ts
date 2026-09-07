@@ -43,6 +43,8 @@ export type Peserta = {
   jenisKelamin: "L" | "P";
   noHp: string;
   nomorPermohonan: string;
+  suratPermohonanFileName: string;
+  suratPermohonanFilePath: string;
   keperluan: "IZIN_SENJATA" | "RIKKES_BERKALA" | "LAINNYA";
   statusRikkes: HasilRikkes;
   statusIzin: "BELUM" | "DIAJUKAN" | "DISETUJUI" | "DITOLAK";

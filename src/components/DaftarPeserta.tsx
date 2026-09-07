@@ -383,7 +383,21 @@ export function DaftarPeserta({ peserta }: Props) {
                       </td>
 
                       <td>{p.nrp}</td>
-                      <td>{p.nomorPermohonan || "-"}</td>
+                      <td>
+                        {p.nomorPermohonan || "-"}
+                        {p.suratPermohonanFilePath ? (
+                          <div>
+                            <a
+                              href={p.suratPermohonanFilePath}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="linkish"
+                            >
+                              {p.suratPermohonanFileName || "Lihat surat"}
+                            </a>
+                          </div>
+                        ) : null}
+                      </td>
                       <td>{p.pangkat || "-"}</td>
                       <td>{p.jabatan || "-"}</td>
                       <td>{p.satuan || "-"}</td>
