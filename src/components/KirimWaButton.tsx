@@ -9,6 +9,7 @@ type Props = {
   rikkesId?: string | null;
   izinId: string;
   status: string;
+  skhpkFilePath?: string | null;
 };
 
 export function KirimWaButton({
@@ -18,6 +19,7 @@ export function KirimWaButton({
   rikkesId,
   izinId,
   status,
+  skhpkFilePath,
 }: Props) {
   const [loading, setLoading] = useState(false);
 
@@ -27,10 +29,6 @@ export function KirimWaButton({
       return;
     }
 
-    /*
-     * Bersihkan nomor HP
-     * 0812xxxx -> 62812xxxx
-     */
     let nomor = noHp.replace(/\D/g, "");
 
     if (nomor.startsWith("0")) {
@@ -43,12 +41,11 @@ export function KirimWaButton({
     let linkHalaman = "";
 
     if (status === "DISETUJUI") {
-      if (!rikkesId) {
-        alert("Data rikkes tidak ditemukan.");
+      if (!skhpkFilePath) {
+        alert("Unggah file SKHPK terlebih dahulu sebelum mengirim WhatsApp.");
         return;
       }
-
-      linkHalaman = `${baseUrl}/skhpk/${rikkesId}`;
+      linkHalaman = `${baseUrl}/skhpk-berkas/${izinId}`;
     } else if (status === "DITOLAK") {
       linkHalaman = `${baseUrl}/tidak-memenuhi-syarat/${izinId}`;
     } else {
@@ -91,9 +88,9 @@ export function KirimWaButton({
         `dengan Nomor Permohonan ${nomorPermohonan || "-"}, ` +
         `kami informasikan bahwa pengajuan Anda telah DISETUJUI.\n\n` +
         `Surat Keterangan Hasil Pemeriksaan Kesehatan (SKHPK) ` +
-        `dapat dilihat melalui tautan berikut:\n\n` +
+        `dapat diunduh melalui tautan berikut:\n\n` +
         `${linkHalaman}\n\n` +
-        `Untuk membuka cetakan, gunakan NRP Anda sebagai kata sandi.\n\n` +
+        `Untuk membuka berkas, gunakan NRP Anda sebagai kata sandi.\n\n` +
         `Demikian disampaikan. Terima kasih.`;
     }
 
@@ -121,7 +118,9 @@ export function KirimWaButton({
       disabled={loading}
       title={
         status === "DISETUJUI"
-          ? "Data pejabat cetakan SKHPK dikunci pada pengiriman pertama."
+          ? skhpkFilePath
+            ? "Mengirim tautan file SKHPK yang diunggah."
+            : "Unggah file SKHPK terlebih dahulu."
           : undefined
       }
       style={{

@@ -17,6 +17,7 @@ import {
   nextSkhpkSeq,
 } from "@/lib/skhpk";
 import type { HasilRikkes, IzinSenjata, Peserta, Rikkes } from "@/lib/types";
+import { removeUploadByPublicPath } from "@/lib/uploads";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -254,6 +255,9 @@ export async function DELETE(_request: Request, { params }: Params) {
   }
 
   const next = list.filter((item) => item.id !== id);
+  if (current.skhpkFilePath) {
+    await removeUploadByPublicPath(current.skhpkFilePath);
+  }
   await saveIzin(next);
 
   const pesertaList = await getPeserta();

@@ -202,6 +202,8 @@ const defaultIzin: IzinSenjata[] = [
     tanggalPengajuan: "2026-08-01",
     status: "VERIFIKASI",
     catatan: "Menunggu hasil rikkes terbaru dari MCU.",
+    skhpkFileName: "",
+    skhpkFilePath: "",
     createdAt: now,
     updatedAt: now,
   },
@@ -216,6 +218,8 @@ const defaultIzin: IzinSenjata[] = [
     catatan: "SKHPK telah diterbitkan.",
     rikkesId: "r-002",
     ditujukanKepada: "As SDM Kapolri",
+    skhpkFileName: "",
+    skhpkFilePath: "",
     createdAt: now,
     updatedAt: now,
   },
@@ -348,6 +352,8 @@ function mapIzin(row: Record<string, unknown>): IzinSenjata {
     catatan: String(row.catatan || ""),
     rikkesId: row.rikkes_id ? String(row.rikkes_id) : undefined,
     ditujukanKepada: String(row.ditujukan_kepada || ""),
+    skhpkFileName: String(row.skhpk_file_name || ""),
+    skhpkFilePath: String(row.skhpk_file_path || ""),
     createdAt: new Date(String(row.created_at)).toISOString(),
     updatedAt: new Date(String(row.updated_at)).toISOString(),
   };
@@ -367,6 +373,14 @@ export async function ensureDb() {
   await query(
     `ALTER TABLE izin_senjata
      ADD COLUMN IF NOT EXISTS ditujukan_kepada TEXT NOT NULL DEFAULT ''`,
+  );
+  await query(
+    `ALTER TABLE izin_senjata
+     ADD COLUMN IF NOT EXISTS skhpk_file_name TEXT NOT NULL DEFAULT ''`,
+  );
+  await query(
+    `ALTER TABLE izin_senjata
+     ADD COLUMN IF NOT EXISTS skhpk_file_path TEXT NOT NULL DEFAULT ''`,
   );
   await query(
     `CREATE TABLE IF NOT EXISTS activity_log (
@@ -611,8 +625,9 @@ async function upsertIzin(i: IzinSenjata) {
   await query(
     `INSERT INTO izin_senjata (
        id, peserta_id, nomor_permohonan, jenis_senjata, keperluan, tanggal_pengajuan,
-       status, catatan, rikkes_id, ditujukan_kepada, created_at, updated_at
-     ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+       status, catatan, rikkes_id, ditujukan_kepada, skhpk_file_name, skhpk_file_path,
+       created_at, updated_at
+     ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
      ON CONFLICT (id) DO UPDATE SET
        peserta_id = EXCLUDED.peserta_id,
        nomor_permohonan = EXCLUDED.nomor_permohonan,
@@ -623,6 +638,8 @@ async function upsertIzin(i: IzinSenjata) {
        catatan = EXCLUDED.catatan,
        rikkes_id = EXCLUDED.rikkes_id,
        ditujukan_kepada = EXCLUDED.ditujukan_kepada,
+       skhpk_file_name = EXCLUDED.skhpk_file_name,
+       skhpk_file_path = EXCLUDED.skhpk_file_path,
        updated_at = EXCLUDED.updated_at`,
     [
       i.id,
@@ -635,6 +652,8 @@ async function upsertIzin(i: IzinSenjata) {
       i.catatan,
       i.rikkesId || null,
       i.ditujukanKepada || "",
+      i.skhpkFileName || "",
+      i.skhpkFilePath || "",
       i.createdAt,
       i.updatedAt,
     ],

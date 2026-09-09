@@ -25,11 +25,13 @@ export async function GET(_request: Request, { params }: Params) {
   }
 
   const file = await fs.readFile(filePath);
-  return new NextResponse(file, {
+  return new NextResponse(new Uint8Array(file), {
     headers: {
       "Content-Type": contentTypeFor(filePath),
       "Content-Disposition": `inline; filename="${filename}"`,
+      "Content-Length": String(file.byteLength),
       "Cache-Control": "private, no-store",
+      "X-Content-Type-Options": "nosniff",
     },
   });
 }

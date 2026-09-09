@@ -90,6 +90,8 @@ export type IzinSenjata = {
   catatan: string;
   rikkesId?: string;
   ditujukanKepada?: string;
+  skhpkFileName?: string;
+  skhpkFilePath?: string;
   createdAt: string;
   updatedAt: string;
 };

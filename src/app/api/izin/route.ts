@@ -61,6 +61,8 @@ export async function POST(request: Request) {
     catatan: String(body.catatan || "").trim(),
     rikkesId: body.rikkesId || undefined,
     ditujukanKepada: String(body.ditujukanKepada || "").trim(),
+    skhpkFileName: "",
+    skhpkFilePath: "",
     createdAt: now,
     updatedAt: now,
   };

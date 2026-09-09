@@ -6,6 +6,7 @@ import { formatDate } from "@/lib/format";
 import { IzinBadge } from "@/components/StatusBadge";
 import { IzinStatusActions } from "@/components/IzinStatusActions";
 import { KirimWaButton } from "@/components/KirimWaButton";
+import { SkhpkFileUpload } from "@/components/SkhpkFileUpload";
 import type { IzinSenjata, Peserta, Rikkes } from "@/lib/types";
 
 type Props = {
@@ -484,6 +485,10 @@ export function RiwayatIzinSenjata({
                 </th>
 
                 <th>
+                  File SKHPK
+                </th>
+
+                <th>
                   Kirim WA
                 </th>
               </tr>
@@ -651,6 +656,15 @@ export function RiwayatIzinSenjata({
                       </div>
                     </td>
 
+                    {/* FILE SKHPK */}
+                    <td>
+                      <SkhpkFileUpload
+                        izinId={i.id}
+                        fileName={i.skhpkFileName}
+                        filePath={i.skhpkFilePath}
+                      />
+                    </td>
+
                     {/* KIRIM WA */}
                     <td>
                       <KirimWaButton
@@ -662,6 +676,7 @@ export function RiwayatIzinSenjata({
                         rikkesId={r?.id}
                         izinId={i.id}
                         status={i.status}
+                        skhpkFilePath={i.skhpkFilePath}
                       />
                     </td>
                   </tr>

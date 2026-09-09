@@ -4,18 +4,29 @@ import Image from "next/image";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 
-export function SkhpkUnlockForm({ rikkesId }: { rikkesId: string }) {
+export function SkhpkUnlockForm({
+  rikkesId,
+  unlockUrl,
+  title = "SKHPK",
+  description = "Masukkan Password Anda untuk membuka cetakan Surat Keterangan Hasil Pemeriksaan Kesehatan.",
+}: {
+  rikkesId?: string;
+  unlockUrl?: string;
+  title?: string;
+  description?: string;
+}) {
   const router = useRouter();
   const [nrp, setNrp] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const endpoint = unlockUrl || `/api/skhpk/${rikkesId}/unlock`;
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError("");
 
-    const res = await fetch(`/api/skhpk/${rikkesId}/unlock`, {
+    const res = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ nrp }),
@@ -43,12 +54,8 @@ export function SkhpkUnlockForm({ rikkesId }: { rikkesId: string }) {
           className="login-logo"
           priority
         />
-        <h1>SKHPK</h1>
-        <p className="tagline">
-          Masukkan Password Anda untuk membuka
-          <br />
-          cetakan Surat Keterangan Hasil Pemeriksaan Kesehatan.
-        </p>
+        <h1>{title}</h1>
+        <p className="tagline">{description}</p>
 
         {error ? <p className="error-text">{error}</p> : null}
 

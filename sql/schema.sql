@@ -66,6 +66,8 @@ CREATE TABLE IF NOT EXISTS izin_senjata (
   catatan TEXT NOT NULL DEFAULT '',
   rikkes_id TEXT,
   ditujukan_kepada TEXT NOT NULL DEFAULT '',
+  skhpk_file_name TEXT NOT NULL DEFAULT '',
+  skhpk_file_path TEXT NOT NULL DEFAULT '',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
