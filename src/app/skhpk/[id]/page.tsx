@@ -7,13 +7,18 @@ import { SkhpkUnlockForm } from "@/components/SkhpkUnlockForm";
 import { SkhpkWatermark } from "@/components/SkhpkWatermark";
 import { getAppOrigin } from "@/lib/app-url";
 import { getSession } from "@/lib/auth";
-import { getIzin, getPeserta, getRikkes, resolveSkhpkSigner } from "@/lib/db";
+import { getIzin, getPeserta, getRikkes, resolveSkhpkSigner, saveRikkes } from "@/lib/db";
 import { hasSkhpkAccess } from "@/lib/skhpk-access";
 import {
   SKHPK_DASAR,
+  assignNomorSkhpkIfNeeded,
   canPrintSkhpk,
-  formatLongDateId,
+  formatNamaPejabatSkhpk,
+  formatRujukanPermohonan,
   memenuhiSyarat,
+  pecahBulanTahun,
+  skhpkBioTutup,
+  skhpkHurufSurat,
 } from "@/lib/skhpk";
 import "./skhpk.css";
 
@@ -81,31 +86,35 @@ export default async function SkhpkPage({ params, searchParams }: Params) {
     );
   }
 
-  const nomor =
-    rikkes.nomorSkhpk ||
-    `SKHPK/ DRAFT /${new Date().getFullYear()}/DOKKES`;
+  const assigned = assignNomorSkhpkIfNeeded(rikkes, rikkesList, peserta);
+  if (assigned.assigned) {
+    await saveRikkes(assigned.allRikkes);
+  }
+  const surat = assigned.rikkes;
+  const nomor = surat.nomorSkhpk || "";
 
   const tanggalTerbit =
-    rikkes.tanggalTerbit || rikkes.tanggalPemeriksaan;
+    surat.tanggalTerbit || surat.tanggalPemeriksaan;
+  const { bulan, tahun } = pecahBulanTahun(tanggalTerbit);
 
-  const signer = await resolveSkhpkSigner(rikkes);
+  const signer = await resolveSkhpkSigner(surat);
   const origin = await getAppOrigin();
-  const qrUrl = `${origin}/ttd/${rikkes.id}`;
+  const qrUrl = `${origin}/ttd/${surat.id}`;
 
-  const lulus = memenuhiSyarat(rikkes.hasil);
+  const lulus = memenuhiSyarat(surat.hasil);
 
   const izin =
-    izinList.find((item) => item.rikkesId === rikkes.id) ||
+    izinList.find((item) => item.rikkesId === surat.id) ||
     izinList
-      .filter((item) => item.pesertaId === rikkes.pesertaId)
+      .filter((item) => item.pesertaId === surat.pesertaId)
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
 
   const ditujukan =
     izin?.ditujukanKepada?.trim() ||
-    rikkes.ditujukanKepada?.trim() ||
+    surat.ditujukanKepada?.trim() ||
     "As SDM Kapolri";
 
-  const rujukanB = izin?.nomorPermohonan?.trim() || "-";
+  const rujukanB = formatRujukanPermohonan(izin?.nomorPermohonan);
 
   return (
     <div className="skhpk-page">
@@ -173,8 +182,8 @@ export default async function SkhpkPage({ params, searchParams }: Params) {
             <Image
               src="/polri-logo.png"
               alt="Logo Polri"
-              width={70}
-              height={70}
+              width={86}
+              height={86}
               className="skhpk-logo"
               priority
             />
@@ -220,7 +229,7 @@ export default async function SkhpkPage({ params, searchParams }: Params) {
             <div className="skhpk-content">
 
               <p>
-                Dengan ini menerangkan bahwa hasil pemeriksaan
+                Dengan ini Menerangkan bahwa hasil pemeriksaan
                 terhadap:
               </p>
 
@@ -231,7 +240,7 @@ export default async function SkhpkPage({ params, searchParams }: Params) {
                     <td>a.</td>
                     <td>nama</td>
                     <td>:</td>
-                    <td>{peserta.nama}</td>
+                    <td>{skhpkBioTutup(skhpkHurufSurat(peserta.nama), ";")}</td>
                   </tr>
 
                   <tr>
@@ -239,9 +248,12 @@ export default async function SkhpkPage({ params, searchParams }: Params) {
                     <td>jenis kelamin</td>
                     <td>:</td>
                     <td>
-                      {peserta.jenisKelamin === "L"
-                        ? "Laki - Laki"
-                        : "Perempuan"}
+                      {skhpkBioTutup(
+                        peserta.jenisKelamin === "L"
+                          ? "Laki - Laki"
+                          : "Perempuan",
+                        ";",
+                      )}
                     </td>
                   </tr>
 
@@ -250,34 +262,37 @@ export default async function SkhpkPage({ params, searchParams }: Params) {
                     <td>pangkat/NRP</td>
                     <td>:</td>
                     <td>
-                      {peserta.pangkat}/{peserta.nrp}
+                      {skhpkBioTutup(
+                        `${peserta.pangkat}/${peserta.nrp}`,
+                        "",
+                      )}
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td></td>
+                    <td>jabatan</td>
+                    <td>:</td>
+                    <td>
+                      {skhpkBioTutup(skhpkHurufSurat(peserta.jabatan), ";")}
                     </td>
                   </tr>
 
                   <tr>
                     <td>d.</td>
-                    <td>jabatan</td>
+                    <td>kesatuan</td>
                     <td>:</td>
                     <td>
-                      {peserta.jabatan || "-"}
+                      {skhpkBioTutup(skhpkHurufSurat(peserta.satuan), ";")}
                     </td>
                   </tr>
 
                   <tr>
                     <td>e.</td>
-                    <td>kesatuan</td>
-                    <td>:</td>
-                    <td>
-                      {peserta.satuan || "-"}
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td>f.</td>
                     <td>alamat kantor</td>
                     <td>:</td>
                     <td>
-                      {peserta.alamatKantor || "-"}
+                      {skhpkBioTutup(skhpkHurufSurat(peserta.alamatKantor), ".")}
                     </td>
                   </tr>
 
@@ -292,25 +307,17 @@ export default async function SkhpkPage({ params, searchParams }: Params) {
 
                 {lulus ? (
                   <>
-                    <strong>Memenuhi</strong>
-                    <span> / </span>
-                    <span className="strike">
-                      Tidak Memenuhi
-                    </span>
+                    <strong>Memenuhi</strong>/<span className="strike">Tidak Memenuhi</span>
                   </>
                 ) : (
                   <>
-                    <span className="strike">
-                      Memenuhi
-                    </span>
-                    <span> / </span>
-                    <strong>Tidak Memenuhi</strong>
+                    <span className="strike">Memenuhi</span>/<strong>Tidak Memenuhi</strong>
                   </>
                 )}
 
                 {" "}Syarat untuk mendapatkan Surat Izin Pinjam
-                Pakai Senjata Api / Surat Izin Pakai dan Membawa
-                Senjata Api.
+                Pakai Senjata Api/Surat Izin Pinjam Pakai dan
+                Membawa Senjata Api.
 
               </p>
 
@@ -341,49 +348,19 @@ export default async function SkhpkPage({ params, searchParams }: Params) {
 
         </div>
 
-        {/* ================= PENUTUP ================= */}
-        <div className="skhpk-closing">
-
-          <p>
-            Demikian surat keterangan ini dibuat untuk
-            dipergunakan sebagaimana mestinya.
-          </p>
-
-        </div>
-
         {/* ================= FOOTER ================= */}
         <div className="skhpk-footer">
-
-          {/* KEPADA */}
-          <div className="skhpk-tujuan">
-
-            <p>
-              Kepada Yth.:
-            </p>
-
-            <p>
-              {ditujukan}
-            </p>
-
-            {/* <p>
-              di
-            </p>
-
-            <p>
-              Jakarta
-            </p> */}
-
-          </div>
-
-          {/* TANDA TANGAN */}
           <div className="skhpk-sign">
-
             <p className="skhpk-place">
-              Dikeluarkan di: Jakarta
+              Dikeluarkan di : Jakarta
             </p>
 
-            <p>
-              pada tanggal: {formatLongDateId(tanggalTerbit)}
+            <p className="skhpk-date">
+              <span className="skhpk-date-label">pada tanggal :</span>
+              <span className="skhpk-date-line">
+                <span className="skhpk-date-month">{bulan}</span>
+                <span className="skhpk-date-year">{tahun}</span>
+              </span>
             </p>
 
             <p className="skhpk-sign-title">
@@ -394,7 +371,6 @@ export default async function SkhpkPage({ params, searchParams }: Params) {
               {signer.jabatan}
             </p>
 
-            {/* QR SPECIMEN TTD — disembunyikan pada pratinjau tanpa TTD */}
             <div
               className={
                 tanpaTtd
@@ -406,22 +382,25 @@ export default async function SkhpkPage({ params, searchParams }: Params) {
                 <QrCode
                   value={qrUrl}
                   className="skhpk-qr"
-                  size={108}
+                  size={104}
                 />
               )}
             </div>
 
-            {/* NAMA */}
             <p className="skhpk-signer-name">
-              {signer.nama}
+              {formatNamaPejabatSkhpk(signer.nama)}
             </p>
 
             <p className="skhpk-signer-rank">
               {signer.pangkat}
+              {signer.nrp ? ` NRP ${signer.nrp}` : ""}
             </p>
-
           </div>
 
+          <div className="skhpk-tujuan">
+            <p>Kepada Yth.:</p>
+            <p>{ditujukan}</p>
+          </div>
         </div>
 
       </article>

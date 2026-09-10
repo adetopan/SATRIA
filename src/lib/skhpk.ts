@@ -45,7 +45,7 @@ export function signerTtdSrc(signer: Pick<SkhpkSigner, "ttdImagePath">) {
 }
 
 export const SKHPK_DASAR =
-  "Keputusan Kapolri Nomor: Kep/1133/VI/2018 tanggal 12 Juni 2018 tentang Mekanisme Pemberian, Pengawasan dan Penyimpanan Senjata Api Organik Kepolisian Negara Republik Indonesia kepada Pejabat Polri;";
+  "Keputusan Kepala Kepolisian Negara Republik Indonesia Nomor: Kep/297/II/2025 tanggal 13 Februari 2025 tentang Mekanisme Pemberian Izin Penggunaan, Pengawasan dan Penyimpanan Senjata Api Organik Kepolisian Negara Republik Indonesia di lingkungan Kepala Kepolisian Negara Republik Indonesia;";
 
 const ROMAN = [
   "I",
@@ -80,6 +80,54 @@ export function formatLongDateId(dateStr: string) {
   });
 }
 
+/** Tutup nilai biodata SKHPK agar tidak dobel titik/koma. */
+export function skhpkBioTutup(value: string | undefined, mark: ";" | "." | "") {
+  const text = String(value || "-")
+    .trim()
+    .replace(/[;.,]+$/g, "");
+  return mark ? `${text}${mark}` : text;
+}
+
+/** Huruf judul untuk teks KAPITAL SEMUA, biarkan data campur apa adanya. */
+export function skhpkHurufSurat(value: string | undefined) {
+  const raw = String(value || "").trim();
+  if (!raw) return "-";
+  const letters = raw.replace(/[^A-Za-z]/g, "");
+  if (!letters) return raw;
+  const upperRatio = (letters.match(/[A-Z]/g) || []).length / letters.length;
+  if (upperRatio < 0.72) return raw;
+  return raw.replace(/[A-Za-z][A-Za-z']*/g, (word) => {
+    return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+  });
+}
+
+export function formatNamaPejabatSkhpk(nama: string) {
+  return String(nama || "")
+    .replace(/([a-z]\.)([A-Z])/g, "$1 $2")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export function formatRujukanPermohonan(raw: string | undefined) {
+  const text = String(raw || "").trim();
+  if (!text || text === "-") return "-";
+  const stripped = text.replace(/^rujukan\s+/i, "").trim();
+  if (!stripped) return "-";
+  if (/^surat\b/i.test(stripped) || /\bnomor\s*:/i.test(stripped)) {
+    return stripped;
+  }
+  return `Surat Koordinator Staf Pribadi Pimpinan Polri Nomor: ${stripped} hal permohonan SKHPK dalam rangka pembuatan surat izin pinjam pakai dan membawa senjata api organik Polri.`;
+}
+
+export function pecahBulanTahun(dateStr: string) {
+  const d = new Date(dateStr);
+  const src = Number.isNaN(d.getTime()) ? new Date() : d;
+  return {
+    bulan: src.toLocaleDateString("id-ID", { month: "long" }),
+    tahun: src.getFullYear(),
+  };
+}
+
 export function formatShortDateId(dateStr: string) {
   const d = new Date(dateStr);
   if (Number.isNaN(d.getTime())) return dateStr;
@@ -96,6 +144,37 @@ export const SKHPK_SEQ_START = 83;
 export function buildNomorSkhpk(seq: number, tanggal: string) {
   const year = new Date(tanggal).getFullYear() || new Date().getFullYear();
   return `SKHPK/ ${seq} /${romanMonth(tanggal)}/KES.15./${year}/DOKKES`;
+}
+
+export function nomorSkhpkSiap(nomor?: string) {
+  const raw = String(nomor || "").trim();
+  if (!raw || /draft/i.test(raw)) return undefined;
+  return raw;
+}
+
+export function assignNomorSkhpkIfNeeded(
+  rikkes: Rikkes,
+  allRikkes: Rikkes[],
+  peserta: Peserta,
+) {
+  const existing = nomorSkhpkSiap(rikkes.nomorSkhpk);
+  if (existing) {
+    return { rikkes, allRikkes, assigned: false as const };
+  }
+
+  const tanggal = rikkes.tanggalTerbit || rikkes.tanggalPemeriksaan;
+  const next: Rikkes = {
+    ...rikkes,
+    nomorSkhpk: buildNomorSkhpk(nextSkhpkSeq(allRikkes), tanggal),
+    tanggalTerbit: rikkes.tanggalTerbit || rikkes.tanggalPemeriksaan,
+  };
+  next.barcodeValue = buildBarcodeValue(next, peserta);
+
+  return {
+    rikkes: next,
+    allRikkes: allRikkes.map((row) => (row.id === next.id ? next : row)),
+    assigned: true as const,
+  };
 }
 
 export function parseSkhpkSeq(nomor?: string) {

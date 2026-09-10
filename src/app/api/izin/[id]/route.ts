@@ -15,6 +15,7 @@ import {
   buildBarcodeValue,
   buildNomorSkhpk,
   nextSkhpkSeq,
+  nomorSkhpkSiap,
 } from "@/lib/skhpk";
 import type { HasilRikkes, IzinSenjata, Peserta, Rikkes } from "@/lib/types";
 import { removeUploadByPublicPath } from "@/lib/uploads";
@@ -67,7 +68,7 @@ function applyHasilToRikkes(
 ): Rikkes {
   if (hasil === "LAYAK") {
     const nomorSkhpk =
-      rikkes.nomorSkhpk ||
+      nomorSkhpkSiap(rikkes.nomorSkhpk) ||
       buildNomorSkhpk(nextSkhpkSeq(allRikkes), rikkes.tanggalPemeriksaan);
     const next: Rikkes = {
       ...rikkes,
