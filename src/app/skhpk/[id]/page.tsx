@@ -270,7 +270,7 @@ export default async function SkhpkPage({ params, searchParams }: Params) {
                   </tr>
 
                   <tr>
-                    <td></td>
+                    <td>d.</td>
                     <td>jabatan</td>
                     <td>:</td>
                     <td>
@@ -279,7 +279,7 @@ export default async function SkhpkPage({ params, searchParams }: Params) {
                   </tr>
 
                   <tr>
-                    <td>d.</td>
+                    <td>e.</td>
                     <td>kesatuan</td>
                     <td>:</td>
                     <td>
@@ -288,7 +288,7 @@ export default async function SkhpkPage({ params, searchParams }: Params) {
                   </tr>
 
                   <tr>
-                    <td>e.</td>
+                    <td>f.</td>
                     <td>alamat kantor</td>
                     <td>:</td>
                     <td>
@@ -393,7 +393,7 @@ export default async function SkhpkPage({ params, searchParams }: Params) {
 
             <p className="skhpk-signer-rank">
               {signer.pangkat}
-              {signer.nrp ? ` NRP ${signer.nrp}` : ""}
+              
             </p>
           </div>
 
