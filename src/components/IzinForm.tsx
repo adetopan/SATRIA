@@ -5,6 +5,13 @@ import { useRouter } from "next/navigation";
 import type { IzinSenjata, Peserta, Rikkes } from "@/lib/types";
 import { formatDate } from "@/lib/format";
 import { SearchableSelect } from "@/components/SearchableSelect";
+import { useToast } from "@/components/ToastProvider";
+import {
+  BULAN_SKHPK,
+  monthIndexFromDate,
+  parseSkhpkRomanMonth,
+  replaceSkhpkMonth,
+} from "@/lib/skhpk";
 
 type Props = {
   peserta: Peserta[];
@@ -22,6 +29,7 @@ export function IzinForm({
   onCancelEdit,
 }: Props) {
   const router = useRouter();
+  const { notify } = useToast();
   const formRef = useRef<HTMLFormElement>(null);
 
   const [rikkesId, setRikkesId] = useState("");
@@ -29,9 +37,10 @@ export function IzinForm({
   const [keperluan, setKeperluan] = useState("");
   const [tanggalPengajuan, setTanggalPengajuan] = useState("");
   const [kepadaYth, setKepadaYth] = useState("");
+  const [bulanSkhpk, setBulanSkhpk] = useState("");
+  const [nomorSkhpk, setNomorSkhpk] = useState("");
   const [catatan, setCatatan] = useState("");
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
   const pesertaSudahIzin = useMemo(() => {
@@ -67,6 +76,24 @@ export function IzinForm({
     );
   }, [editing, rikkes, rikkesId, peserta]);
 
+  const nomorSkhpkTampil = useMemo(() => {
+    if (!nomorSkhpk) return "";
+    const idx = Number(bulanSkhpk) - 1;
+    if (idx < 0 || idx > 11) return nomorSkhpk;
+    return replaceSkhpkMonth(nomorSkhpk, idx);
+  }, [nomorSkhpk, bulanSkhpk]);
+
+  function applyLinkedRikkes(id: string) {
+    const linkedRikkes = rikkes.find((r) => r.id === id);
+    const nomor = linkedRikkes?.nomorSkhpk || "";
+    setNomorSkhpk(nomor);
+    const fromNomor = parseSkhpkRomanMonth(nomor);
+    const fromDate = monthIndexFromDate(
+      linkedRikkes?.tanggalTerbit || linkedRikkes?.tanggalPemeriksaan || "",
+    );
+    setBulanSkhpk(String((fromNomor ?? fromDate) + 1));
+  }
+
   useEffect(() => {
     if (!editing) return;
     const linked =
@@ -85,8 +112,8 @@ export function IzinForm({
         linkedRikkes?.ditujukanKepada ||
         "",
     );
+    applyLinkedRikkes(linked);
     setError("");
-    setSuccess("");
     formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [editing, rikkes]);
 
@@ -96,13 +123,14 @@ export function IzinForm({
     setKeperluan("");
     setTanggalPengajuan("");
     setKepadaYth("");
+    setBulanSkhpk("");
+    setNomorSkhpk("");
     setCatatan("");
   }
 
   function handleCancelEdit() {
     resetForm();
     setError("");
-    setSuccess("");
     onCancelEdit();
   }
 
@@ -125,7 +153,6 @@ export function IzinForm({
 
     setLoading(true);
     setError("");
-    setSuccess("");
 
     const payload: Record<string, string> = {
       pesertaId: selected.pesertaId,
@@ -136,30 +163,41 @@ export function IzinForm({
       ditujukanKepada: kepadaYth.trim(),
       catatan,
     };
+    if (editing && bulanSkhpk) payload.bulanSkhpk = bulanSkhpk;
     if (!editing) payload.status = "DIAJUKAN";
 
-    const res = await fetch(editing ? `/api/izin/${editing.id}` : "/api/izin", {
-      method: editing ? "PUT" : "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+    try {
+      const res = await fetch(editing ? `/api/izin/${editing.id}` : "/api/izin", {
+        method: editing ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
-    const data = await res.json();
-    setLoading(false);
+      const data = await res.json().catch(() => ({}));
 
-    if (!res.ok) {
-      setError(data.error || "Gagal menyimpan permohonan izin.");
-      return;
+      if (!res.ok) {
+        const message = data.error || "Gagal menyimpan permohonan izin.";
+        setError(message);
+        notify("error", message);
+        return;
+      }
+
+      notify(
+        "success",
+        editing
+          ? "Data izin senjata berhasil diperbarui."
+          : "Permohonan izin berhasil disimpan.",
+      );
+      resetForm();
+      onCancelEdit();
+      router.refresh();
+    } catch {
+      const message = "Terjadi kesalahan saat menyimpan permohonan izin.";
+      setError(message);
+      notify("error", message);
+    } finally {
+      setLoading(false);
     }
-
-    setSuccess(
-      editing
-        ? "Data izin senjata berhasil diperbarui."
-        : "Permohonan izin berhasil disimpan."
-    );
-    resetForm();
-    onCancelEdit();
-    router.refresh();
   }
 
   if (peserta.length === 0) {
@@ -201,18 +239,13 @@ export function IzinForm({
           </h2>
           <p>
             {editing
-              ? "Ubah data pengajuan, lalu simpan kembali. Status kelayakan tidak berubah dari tombol ini."
+              ? "Ubah data pengajuan, termasuk bulan SKHPK, lalu simpan kembali. Nomor urut SKHPK tetap otomatis."
               : "Hanya peserta yang sudah MCU dan belum memiliki pengajuan izin yang dapat dipilih. Jika pengajuan dihapus, peserta akan tampil lagi di daftar ini."}
           </p>
         </div>
       </div>
 
       {error ? <p className="error-text">{error}</p> : null}
-      {success ? (
-        <p className="hint-box" style={{ marginTop: 0 }}>
-          {success}
-        </p>
-      ) : null}
 
       <div className="form-grid">
         <SearchableSelect
@@ -228,6 +261,7 @@ export function IzinForm({
             if (!kepadaYth.trim() && selected?.ditujukanKepada) {
               setKepadaYth(selected.ditujukanKepada);
             }
+            if (editing) applyLinkedRikkes(id);
           }}
         />
         <div className="field">
@@ -268,6 +302,42 @@ export function IzinForm({
             required
           />
         </div>
+        {editing ? (
+          <>
+            <div className="field">
+              <label>Nomor SKHPK</label>
+              <input
+                value={nomorSkhpkTampil || "Belum terbit (otomatis saat disetujui/dicetak)"}
+                readOnly
+              />
+            </div>
+            <div className="field">
+              <label>Bulan SKHPK</label>
+              <select
+                value={bulanSkhpk}
+                onChange={(e) => setBulanSkhpk(e.target.value)}
+                required
+              >
+                <option value="">Pilih bulan</option>
+                {BULAN_SKHPK.map((item) => (
+                  <option key={item.value} value={item.value}>
+                    {item.label}
+                  </option>
+                ))}
+              </select>
+              <p
+                style={{
+                  margin: "0.35rem 0 0",
+                  fontSize: "0.78rem",
+                  color: "var(--satria-muted)",
+                }}
+              >
+                Hanya bulan (angka Romawi) yang diubah. Nomor urut tetap dari
+                aplikasi.
+              </p>
+            </div>
+          </>
+        ) : null}
         <div className="field full">
           <label>Kepada Yth. (cetakan SKHPK)</label>
           <input

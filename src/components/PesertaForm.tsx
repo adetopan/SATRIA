@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import type { Peserta } from "@/lib/types";
 import { isValidNrp, normalizeNrp } from "@/lib/format";
 import { SearchableSelect } from "@/components/SearchableSelect";
+import { useToast } from "@/components/ToastProvider";
 
 const empty = {
   nrp: "",
@@ -99,6 +100,7 @@ export function PesertaForm({
   mode?: "create" | "edit";
 }) {
   const router = useRouter();
+  const { notify } = useToast();
 
   const [form, setForm] = useState(initial || empty);
   const [suratPermohonan, setSuratPermohonan] = useState<File | null>(null);
@@ -185,15 +187,25 @@ export function PesertaForm({
       setLoading(false);
 
       if (!res.ok) {
-        setError(data.error || "Gagal menyimpan peserta.");
+        const message = data.error || "Gagal menyimpan peserta.";
+        setError(message);
+        notify("error", message);
         return;
       }
 
+      notify(
+        "success",
+        mode === "edit"
+          ? "Data peserta berhasil diperbarui."
+          : "Peserta berhasil ditambahkan.",
+      );
       router.push(`/peserta/${data.data.id}`);
       router.refresh();
     } catch (error) {
       setLoading(false);
-      setError("Terjadi kesalahan saat menyimpan data peserta.");
+      const message = "Terjadi kesalahan saat menyimpan data peserta.";
+      setError(message);
+      notify("error", message);
     }
   }
 

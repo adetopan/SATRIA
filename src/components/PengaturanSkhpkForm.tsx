@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { signerTtdSrc } from "@/lib/skhpk";
+import { useToast } from "@/components/ToastProvider";
 import type { SkhpkSigner } from "@/lib/types";
 
 type Props = {
@@ -11,6 +12,7 @@ type Props = {
 
 export function PengaturanSkhpkForm({ initial }: Props) {
   const router = useRouter();
+  const { notify } = useToast();
   const [form, setForm] = useState(initial);
   const [ttdFile, setTtdFile] = useState<File | null>(null);
   const [error, setError] = useState("");
@@ -55,15 +57,20 @@ export function PengaturanSkhpkForm({ initial }: Props) {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error || "Gagal menyimpan pengaturan cetakan SKHPK.");
+        const message = data.error || "Gagal menyimpan pengaturan cetakan SKHPK.";
+        setError(message);
+        notify("error", message);
         return;
       }
       setForm(data.data);
       setTtdFile(null);
       setSuccess("Pengaturan cetakan SKHPK berhasil disimpan.");
+      notify("success", "Pengaturan cetakan SKHPK berhasil disimpan.");
       router.refresh();
     } catch {
-      setError("Terjadi kesalahan saat menyimpan pengaturan.");
+      const message = "Terjadi kesalahan saat menyimpan pengaturan.";
+      setError(message);
+      notify("error", message);
     } finally {
       setLoading(false);
     }

@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Peserta, Rikkes } from "@/lib/types";
 import { SearchableSelect } from "@/components/SearchableSelect";
+import { useToast } from "@/components/ToastProvider";
 import {
   duplicateMcuDateMessage,
   findDuplicateMcuDate,
@@ -23,6 +24,7 @@ export function UploadMcuForm({
   onCancelEdit,
 }: Props) {
   const router = useRouter();
+  const { notify } = useToast();
   const formRef = useRef<HTMLFormElement>(null);
 
   const [pesertaId, setPesertaId] = useState("");
@@ -30,7 +32,6 @@ export function UploadMcuForm({
   const [tanggalPemeriksaan, setTanggalPemeriksaan] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
   const sudahMcuIds = useMemo(
@@ -73,7 +74,6 @@ export function UploadMcuForm({
     setTanggalPemeriksaan(editing.tanggalPemeriksaan);
     setFile(null);
     setError("");
-    setSuccess("");
     formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [editing, peserta]);
 
@@ -93,7 +93,6 @@ export function UploadMcuForm({
   function handleCancelEdit() {
     resetForm();
     setError("");
-    setSuccess("");
     onCancelEdit();
   }
 
@@ -102,7 +101,6 @@ export function UploadMcuForm({
 
     setLoading(true);
     setError("");
-    setSuccess("");
 
     if (!pesertaId) {
       setError("Silakan pilih peserta.");
@@ -152,20 +150,25 @@ export function UploadMcuForm({
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Gagal menyimpan hasil MCU.");
+        const message = data.error || "Gagal menyimpan hasil MCU.";
+        setError(message);
+        notify("error", message);
         return;
       }
 
-      setSuccess(
+      notify(
+        "success",
         editing
           ? "Data MCU berhasil diperbarui."
-          : "Hasil rikkes berhasil diunggah ke SATRIA."
+          : "Hasil rikkes berhasil diunggah ke SATRIA.",
       );
       resetForm();
       onCancelEdit();
       router.refresh();
     } catch {
-      setError("Terjadi kesalahan saat menyimpan hasil MCU.");
+      const message = "Terjadi kesalahan saat menyimpan hasil MCU.";
+      setError(message);
+      notify("error", message);
     } finally {
       setLoading(false);
     }
@@ -209,12 +212,6 @@ export function UploadMcuForm({
       </div>
 
       {error ? <p className="error-text">{error}</p> : null}
-
-      {success ? (
-        <p className="hint-box" style={{ marginTop: 0 }}>
-          {success}
-        </p>
-      ) : null}
 
       <div className="form-grid">
         <SearchableSelect

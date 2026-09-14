@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatDate } from "@/lib/format";
+import { useToast } from "@/components/ToastProvider";
 import type { Peserta, Rikkes } from "@/lib/types";
 
 type Props = {
@@ -57,6 +58,7 @@ export function RiwayatUploadMcu({
   // STATE FILTER
   // ==========================================
   const router = useRouter();
+  const { notify } = useToast();
   const [searchPeserta, setSearchPeserta] = useState("");
   const [tanggalDari, setTanggalDari] = useState("");
   const [tanggalSampai, setTanggalSampai] = useState("");
@@ -211,16 +213,21 @@ export function RiwayatUploadMcu({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setDeleteError(data.error || "Gagal menghapus data MCU.");
+        const message = data.error || "Gagal menghapus data MCU.";
+        setDeleteError(message);
+        notify("error", message);
         return;
       }
       if (editingId === pendingDelete.id) {
         onCancelEdit();
       }
       setPendingDelete(null);
+      notify("success", "Data MCU berhasil dihapus.");
       router.refresh();
     } catch {
-      setDeleteError("Terjadi kesalahan saat menghapus data MCU.");
+      const message = "Terjadi kesalahan saat menghapus data MCU.";
+      setDeleteError(message);
+      notify("error", message);
     } finally {
       setDeleting(false);
     }

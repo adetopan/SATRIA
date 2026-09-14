@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/components/ToastProvider";
 
 export function SkhpkFileUpload({
   izinId,
@@ -13,6 +14,7 @@ export function SkhpkFileUpload({
   filePath?: string;
 }) {
   const router = useRouter();
+  const { notify } = useToast();
   const inputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
 
@@ -28,12 +30,13 @@ export function SkhpkFileUpload({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        alert(data.error || "Gagal mengunggah file SKHPK.");
+        notify("error", data.error || "Gagal mengunggah file SKHPK.");
         return;
       }
+      notify("success", "File SKHPK berhasil diunggah.");
       router.refresh();
     } catch {
-      alert("Terjadi kesalahan saat mengunggah file SKHPK.");
+      notify("error", "Terjadi kesalahan saat mengunggah file SKHPK.");
     } finally {
       setLoading(false);
       if (inputRef.current) inputRef.current.value = "";

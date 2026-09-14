@@ -62,12 +62,65 @@ const ROMAN = [
   "XII",
 ];
 
+export const NAMA_BULAN_ID = [
+  "Januari",
+  "Februari",
+  "Maret",
+  "April",
+  "Mei",
+  "Juni",
+  "Juli",
+  "Agustus",
+  "September",
+  "Oktober",
+  "November",
+  "Desember",
+] as const;
+
+export const BULAN_SKHPK = ROMAN.map((roman, index) => ({
+  value: String(index + 1),
+  roman,
+  label: `${NAMA_BULAN_ID[index]} (${roman})`,
+}));
+
+export function monthIndexFromDate(dateStr?: string) {
+  const m = /^(\d{4})-(\d{2})/.exec(String(dateStr || ""));
+  if (m) {
+    const month = Number(m[2]);
+    if (month >= 1 && month <= 12) return month - 1;
+  }
+  const d = new Date(String(dateStr || ""));
+  return Number.isNaN(d.getTime()) ? new Date().getMonth() : d.getMonth();
+}
+
+export function applyMonthToDate(dateStr: string, monthIndex: number) {
+  const month = Math.min(11, Math.max(0, monthIndex));
+  const parsed = /^(\d{4})-(\d{2})-(\d{2})/.exec(dateStr || "");
+  const year = parsed?.[1] || String(new Date().getFullYear());
+  const dayRaw = Number(parsed?.[3] || "1");
+  const lastDay = new Date(Number(year), month + 1, 0).getDate();
+  const day = Math.min(Math.max(dayRaw, 1), lastDay);
+  return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+export function parseSkhpkRomanMonth(nomor?: string) {
+  const m = String(nomor || "").match(/SKHPK\/\s*\d+\s*\/([IVX]+)\//i);
+  if (!m) return null;
+  const idx = ROMAN.indexOf(m[1].toUpperCase());
+  return idx >= 0 ? idx : null;
+}
+
+export function replaceSkhpkMonth(nomor: string, monthIndex: number) {
+  const roman = ROMAN[monthIndex];
+  if (!roman || !nomor) return nomor;
+  return nomor.replace(
+    /^(SKHPK\/\s*\d+\s*\/)([IVX]+)(\/)/i,
+    `$1${roman}$3`,
+  );
+}
+
 export function romanMonth(dateStr: string) {
-  const d = new Date(dateStr);
-  const month = Number.isNaN(d.getTime())
-    ? new Date().getMonth()
-    : d.getMonth();
-  return ROMAN[month];
+  return ROMAN[monthIndexFromDate(dateStr)] || ROMAN[new Date().getMonth()];
 }
 
 export function formatLongDateId(dateStr: string) {
@@ -120,11 +173,17 @@ export function formatRujukanPermohonan(raw: string | undefined) {
 }
 
 export function pecahBulanTahun(dateStr: string) {
+  const month = monthIndexFromDate(dateStr);
+  const parsedYear = /^(\d{4})/.exec(dateStr || "");
   const d = new Date(dateStr);
-  const src = Number.isNaN(d.getTime()) ? new Date() : d;
+  const tahun = parsedYear
+    ? Number(parsedYear[1])
+    : Number.isNaN(d.getTime())
+      ? new Date().getFullYear()
+      : d.getFullYear();
   return {
-    bulan: src.toLocaleDateString("id-ID", { month: "long" }),
-    tahun: src.getFullYear(),
+    bulan: NAMA_BULAN_ID[month],
+    tahun,
   };
 }
 
@@ -150,6 +209,34 @@ export function nomorSkhpkSiap(nomor?: string) {
   const raw = String(nomor || "").trim();
   if (!raw || /draft/i.test(raw)) return undefined;
   return raw;
+}
+
+export function applySkhpkMonth<
+  T extends Pick<
+    Rikkes,
+    "nomorSkhpk" | "tanggalTerbit" | "tanggalPemeriksaan" | "barcodeValue"
+  >,
+>(rikkes: T, monthIndex: number): T {
+  const tanggalDasar = rikkes.tanggalTerbit || rikkes.tanggalPemeriksaan;
+  const tanggalTerbit = applyMonthToDate(tanggalDasar, monthIndex);
+  const existing = nomorSkhpkSiap(rikkes.nomorSkhpk);
+  const nomorSkhpk = existing
+    ? replaceSkhpkMonth(existing, monthIndex)
+    : rikkes.nomorSkhpk;
+  const oldCompact = (rikkes.nomorSkhpk || "").replace(/\s+/g, "");
+  const newCompact = (nomorSkhpk || "").replace(/\s+/g, "");
+  return {
+    ...rikkes,
+    tanggalTerbit,
+    nomorSkhpk,
+    barcodeValue:
+      rikkes.barcodeValue &&
+      oldCompact &&
+      newCompact &&
+      newCompact !== oldCompact
+        ? rikkes.barcodeValue.replace(oldCompact, newCompact)
+        : rikkes.barcodeValue,
+  };
 }
 
 export function assignNomorSkhpkIfNeeded(
@@ -214,7 +301,7 @@ export function rebaseSkhpkNomorList(rikkes: Rikkes[]): Rikkes[] {
 
     const nomorSkhpk = buildNomorSkhpk(
       shiftedSkhpkSeq(seq, runEnd),
-      r.tanggalPemeriksaan || r.tanggalTerbit || new Date().toISOString(),
+      r.tanggalTerbit || r.tanggalPemeriksaan || new Date().toISOString(),
     );
     const oldCompact = (r.nomorSkhpk || "").replace(/\s+/g, "");
     const newCompact = nomorSkhpk.replace(/\s+/g, "");

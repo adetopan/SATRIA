@@ -7,6 +7,7 @@ import { IzinBadge } from "@/components/StatusBadge";
 import { IzinStatusActions } from "@/components/IzinStatusActions";
 import { KirimWaButton } from "@/components/KirimWaButton";
 import { SkhpkFileUpload } from "@/components/SkhpkFileUpload";
+import { useToast } from "@/components/ToastProvider";
 import type { IzinSenjata, Peserta, Rikkes } from "@/lib/types";
 
 type Props = {
@@ -71,6 +72,7 @@ export function RiwayatIzinSenjata({
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
   const router = useRouter();
+  const { notify } = useToast();
 
   // ==========================================
   // PAGINATION
@@ -196,16 +198,21 @@ export function RiwayatIzinSenjata({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setDeleteError(data.error || "Gagal menghapus data izin.");
+        const message = data.error || "Gagal menghapus data izin.";
+        setDeleteError(message);
+        notify("error", message);
         return;
       }
       if (editingId === pendingDelete.id) {
         onCancelEdit();
       }
       setPendingDelete(null);
+      notify("success", "Data izin senjata berhasil dihapus.");
       router.refresh();
     } catch {
-      setDeleteError("Terjadi kesalahan saat menghapus data izin.");
+      const message = "Terjadi kesalahan saat menghapus data izin.";
+      setDeleteError(message);
+      notify("error", message);
     } finally {
       setDeleting(false);
     }

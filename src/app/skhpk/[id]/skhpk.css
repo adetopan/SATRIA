@@ -600,6 +600,7 @@
   width: 80px;
   height: 80px;
   display: block;
+  flex-shrink: 0;
 }
 
 .skhpk-qr-box-empty {
@@ -666,6 +667,7 @@
   .sidebar,
   .topbar,
   .app-shell > aside,
+  .toast-stack,
   nextjs-portal,
   [data-nextjs-toast],
   [data-next-badge-root] {

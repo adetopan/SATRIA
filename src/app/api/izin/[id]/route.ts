@@ -12,6 +12,7 @@ import {
   saveRikkes,
 } from "@/lib/db";
 import {
+  applySkhpkMonth,
   buildBarcodeValue,
   buildNomorSkhpk,
   nextSkhpkSeq,
@@ -67,14 +68,15 @@ function applyHasilToRikkes(
   allRikkes: Rikkes[],
 ): Rikkes {
   if (hasil === "LAYAK") {
+    const tanggalNomor = rikkes.tanggalTerbit || rikkes.tanggalPemeriksaan;
     const nomorSkhpk =
       nomorSkhpkSiap(rikkes.nomorSkhpk) ||
-      buildNomorSkhpk(nextSkhpkSeq(allRikkes), rikkes.tanggalPemeriksaan);
+      buildNomorSkhpk(nextSkhpkSeq(allRikkes), tanggalNomor);
     const next: Rikkes = {
       ...rikkes,
       hasil,
       nomorSkhpk,
-      tanggalTerbit: rikkes.tanggalTerbit || rikkes.tanggalPemeriksaan,
+      tanggalTerbit: tanggalNomor,
       ditujukanKepada: rikkes.ditujukanKepada || "As SDM Kapolri",
     };
     next.barcodeValue = buildBarcodeValue(next, peserta);
@@ -134,16 +136,32 @@ export async function PUT(request: Request, { params }: Params) {
 
   await saveIzin(list);
 
-  if (list[index].rikkesId && body.ditujukanKepada !== undefined) {
+  const bulanSkhpk = Number(body.bulanSkhpk);
+  const bulanIndex =
+    Number.isInteger(bulanSkhpk) && bulanSkhpk >= 1 && bulanSkhpk <= 12
+      ? bulanSkhpk - 1
+      : null;
+
+  if (
+    list[index].rikkesId &&
+    (body.ditujukanKepada !== undefined || bulanIndex !== null)
+  ) {
     const rikkesForTujuan = await getRikkes();
     const tujuanIndex = rikkesForTujuan.findIndex(
       (r) => r.id === list[index].rikkesId,
     );
     if (tujuanIndex >= 0) {
-      rikkesForTujuan[tujuanIndex] = {
+      let nextRikkes = {
         ...rikkesForTujuan[tujuanIndex],
-        ditujukanKepada: list[index].ditujukanKepada || "",
+        ditujukanKepada:
+          body.ditujukanKepada !== undefined
+            ? list[index].ditujukanKepada || ""
+            : rikkesForTujuan[tujuanIndex].ditujukanKepada,
       };
+      if (bulanIndex !== null) {
+        nextRikkes = applySkhpkMonth(nextRikkes, bulanIndex);
+      }
+      rikkesForTujuan[tujuanIndex] = nextRikkes;
       await saveRikkes(rikkesForTujuan);
     }
   }
@@ -155,7 +173,10 @@ export async function PUT(request: Request, { params }: Params) {
       updatedAt: new Date().toISOString(),
     };
 
-    const hasil = hasilFromIzinStatus(status);
+    const hasil =
+      body.status && status !== previousStatus
+        ? hasilFromIzinStatus(status)
+        : null;
     if (hasil) {
       nextPeserta = {
         ...nextPeserta,
@@ -228,6 +249,7 @@ export async function PUT(request: Request, { params }: Params) {
     body.keperluan !== undefined ||
     body.tanggalPengajuan !== undefined ||
     body.ditujukanKepada !== undefined ||
+    body.bulanSkhpk !== undefined ||
     body.rikkesId
   ) {
     await recordActivity(session, {

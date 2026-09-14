@@ -9,15 +9,30 @@ export async function QrCode({
   className?: string;
   size?: number;
 }) {
-  const src = await QRCode.toDataURL(value, {
-    margin: 1,
-    width: size,
-    errorCorrectionLevel: "M",
-    color: {
-      dark: "#111111",
-      light: "#ffffff",
-    },
-  });
+  let src = "";
+  try {
+    src = await QRCode.toDataURL(value || " ", {
+      margin: 1,
+      width: size,
+      errorCorrectionLevel: "M",
+      color: {
+        dark: "#111111",
+        light: "#ffffff",
+      },
+    });
+  } catch {
+    src = "";
+  }
+
+  if (!src) {
+    return (
+      <div
+        className={className}
+        style={{ width: size, height: size }}
+        aria-label="QR specimen tanda tangan"
+      />
+    );
+  }
 
   return (
     <img
