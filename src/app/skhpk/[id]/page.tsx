@@ -283,7 +283,7 @@ export default async function SkhpkPage({ params, searchParams }: Params) {
                     <td>kesatuan</td>
                     <td>:</td>
                     <td>
-                      {skhpkBioTutup(skhpkHurufSurat(peserta.satuan), ";")}
+                      {skhpkBioTutup(peserta.satuan, "")}
                     </td>
                   </tr>
 

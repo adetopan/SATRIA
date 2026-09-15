@@ -49,49 +49,6 @@ const PANGKAT_POLRI = [
   "Bharada",
 ];
 
-// ===============================
-// DAFTAR SATUAN POLRI
-// ===============================
-const SATUAN_POLRI = [
-  "Mabes Polri",
-  "Polda",
-  "Polres",
-  "Polsek",
-  "Brimob",
-  "Propam",
-  "Intelkam",
-  "Reskrim",
-  "Lantas",
-  "Samapta",
-  "Binmas",
-  "Polairud",
-  "Dokkes",
-  "Humas",
-  "SDM",
-  "Logistik",
-  "TIK",
-  "Srena",
-  "Itwasda",
-  "SPN",
-  "Satbrimob",
-  "Ditreskrimum",
-  "Ditreskrimsus",
-  "Ditresnarkoba",
-  "Ditlantas",
-  "Ditsamapta",
-  "Ditbinmas",
-  "Ditpolairud",
-  "Bidpropam",
-  "Bidkum",
-  "Bidkeu",
-  "Bidhumas",
-  "Bid TIK",
-  "Biddokkes",
-  "Biro SDM",
-  "Biro Logistik",
-  "Biro Rena",
-];
-
 export function PesertaForm({
   initial,
   mode = "create",
@@ -374,13 +331,13 @@ export function PesertaForm({
         {/* =============================== */}
 
         <div className="field full">
-          <SearchableSelect
-            label="Satuan"
+          <label>Satuan</label>
+
+          <input
             value={form.satuan}
-            options={SATUAN_POLRI}
-            placeholder="Ketik nama satuan untuk mencari..."
+            onChange={(e) => set("satuan", e.target.value)}
+            placeholder="Masukkan satuan"
             required
-            onChange={(value) => set("satuan", value)}
           />
         </div>
 
