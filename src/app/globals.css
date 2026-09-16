@@ -538,6 +538,24 @@ tr.row-editing {
   margin-bottom: 1.2rem;
 }
 
+.grid-stats-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.grid-stats-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 1rem 0;
+}
+
+.stat em {
+  display: block;
+  margin-top: 0.35rem;
+  font-style: normal;
+  color: var(--satria-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
 .stat {
   background: var(--satria-white);
   border: 1px solid var(--satria-line);
@@ -797,5 +815,209 @@ th {
 
   .content {
     padding: 1rem;
+  }
+}
+
+.manfaat-efisiensi {
+  display: grid;
+  gap: 1rem;
+}
+
+.manfaat-efisiensi .panel + .panel,
+.manfaat-efisiensi .split-2 {
+  margin-top: 0;
+}
+
+.manfaat-efisiensi table {
+  min-width: 0;
+}
+
+.manfaat-catatan {
+  margin: 0;
+  color: var(--satria-muted);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.manfaat-funnel {
+  display: flex;
+  overflow: hidden;
+  border: 1px solid var(--satria-line);
+  min-height: 42px;
+}
+
+.manfaat-funnel-seg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 700;
+  min-width: 2.2rem;
+}
+
+.manfaat-funnel-disetujui,
+.manfaat-dot.manfaat-funnel-disetujui {
+  background: var(--satria-ok);
+}
+
+.manfaat-funnel-ditolak,
+.manfaat-dot.manfaat-funnel-ditolak {
+  background: var(--satria-danger);
+}
+
+.manfaat-funnel-izin,
+.manfaat-dot.manfaat-funnel-izin {
+  background: var(--satria-info);
+}
+
+.manfaat-funnel-mcu,
+.manfaat-dot.manfaat-funnel-mcu {
+  background: var(--satria-wait);
+}
+
+.manfaat-funnel-belum,
+.manfaat-dot.manfaat-funnel-belum {
+  background: var(--satria-muted);
+}
+
+.manfaat-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.1rem;
+  list-style: none;
+  margin: 0.85rem 0 0;
+  padding: 0;
+  color: var(--satria-muted);
+  font-size: 0.88rem;
+}
+
+.manfaat-dot {
+  display: inline-block;
+  width: 0.7rem;
+  height: 0.7rem;
+  margin-right: 0.4rem;
+  vertical-align: -0.1rem;
+}
+
+.manfaat-bars {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.manfaat-bar-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.manfaat-bar-meta strong {
+  color: var(--satria-green-deep);
+}
+
+.manfaat-bar-track {
+  height: 8px;
+  background: var(--satria-green-soft);
+  overflow: hidden;
+}
+
+.manfaat-bar-fill {
+  height: 100%;
+  background: var(--satria-green);
+}
+
+.manfaat-respon-alur {
+  list-style: none;
+  margin: 0 0 0.4rem;
+  padding: 0;
+  display: flex;
+  align-items: stretch;
+  gap: 0.6rem;
+}
+
+.manfaat-respon-alur > li:not(.manfaat-respon-panah) {
+  flex: 1;
+  background: var(--satria-green-soft);
+  border: 1px solid var(--satria-line);
+  padding: 0.85rem 0.9rem;
+}
+
+.manfaat-respon-alur > li span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  margin-bottom: 0.4rem;
+  background: var(--satria-green);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.manfaat-respon-alur strong {
+  display: block;
+  color: var(--satria-green-deep);
+}
+
+.manfaat-respon-alur small {
+  display: block;
+  margin-top: 0.2rem;
+  color: var(--satria-muted);
+}
+
+.manfaat-respon-panah {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 5.5rem;
+  color: var(--satria-green);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+@media (max-width: 1400px) {
+  .grid-stats-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1100px) {
+  .grid-stats-3 {
+    grid-template-columns: 1fr;
+  }
+
+  .manfaat-respon-alur {
+    flex-direction: column;
+  }
+
+  .manfaat-respon-panah {
+    min-height: 2rem;
+  }
+}
+
+@media print {
+  .sidebar,
+  .topbar,
+  .no-print {
+    display: none !important;
+  }
+
+  .app-shell {
+    display: block;
+  }
+
+  .content {
+    padding: 0;
+  }
+
+  .panel,
+  .stat {
+    box-shadow: none;
   }
 }

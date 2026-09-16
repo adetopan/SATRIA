@@ -8,6 +8,7 @@ import { roleLabel } from "@/lib/roles";
 
 const nav = [
   { href: "/dashboard", label: "Dashboard", roles: ["admin", "superadmin", "mcu"] },
+  { href: "/manfaat-efisiensi", label: "Manfaat & Efisiensi", roles: ["admin", "superadmin"] },
   { href: "/peserta", label: "Data Peserta", roles: ["admin", "superadmin"] },
   { href: "/upload-mcu", label: "Upload MCU", roles: ["admin", "superadmin", "mcu"] },
   { href: "/izin-senjata", label: "Izin Senjata Api", roles: ["admin", "superadmin"] },

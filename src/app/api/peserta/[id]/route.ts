@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { requireSession } from "@/lib/auth";
 import { STAFF_ADMIN_ROLES } from "@/lib/roles";
 import { getIzin, getPeserta, getRikkes, savePeserta } from "@/lib/db";
-import { isValidNrp, normalizeNrp } from "@/lib/format";
+import { findPesertaNrpTerpakai, isValidNrp, normalizeNrp, pesanNrpSudahTerpakai } from "@/lib/format";
 import {
   permohonanFileError,
   savePermohonanFile,
@@ -75,6 +75,14 @@ export async function PUT(request: Request, { params }: Params) {
     return NextResponse.json(
       { error: "NRP harus 8 digit angka." },
       { status: 400 },
+    );
+  }
+
+  const terpakai = findPesertaNrpTerpakai(list, nrp, id);
+  if (terpakai) {
+    return NextResponse.json(
+      { error: pesanNrpSudahTerpakai(terpakai.nama, nrp) },
+      { status: 409 },
     );
   }
 

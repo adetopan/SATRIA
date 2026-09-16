@@ -434,10 +434,16 @@ export async function ensureDb() {
     `ALTER TABLE peserta
      ADD COLUMN IF NOT EXISTS surat_permohonan_file_path TEXT NOT NULL DEFAULT ''`,
   );
-  await query(
-    `ALTER TABLE peserta DROP CONSTRAINT IF EXISTS peserta_nrp_key`,
-  );
-  await query(`DROP INDEX IF EXISTS peserta_nrp_key`);
+  await query(`
+    DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM peserta GROUP BY nrp HAVING COUNT(*) > 1
+      ) THEN
+        CREATE UNIQUE INDEX IF NOT EXISTS peserta_nrp_unique ON peserta (nrp);
+      END IF;
+    END $$;
+  `);
   await query(
     `UPDATE peserta p
      SET nomor_permohonan = i.nomor_permohonan
