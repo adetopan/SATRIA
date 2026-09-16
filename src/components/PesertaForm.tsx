@@ -3,7 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Peserta } from "@/lib/types";
-import { findPesertaNrpTerpakai, isValidNrp, normalizeNrp, pesanNrpSudahTerpakai } from "@/lib/format";
+import { isValidNrp, normalizeNrp } from "@/lib/format";
 import { SearchableSelect } from "@/components/SearchableSelect";
 import { useToast } from "@/components/ToastProvider";
 
@@ -52,11 +52,9 @@ const PANGKAT_POLRI = [
 export function PesertaForm({
   initial,
   mode = "create",
-  existing = [],
 }: {
   initial?: Peserta;
   mode?: "create" | "edit";
-  existing?: Pick<Peserta, "id" | "nrp" | "nama">[];
 }) {
   const router = useRouter();
   const { notify } = useToast();
@@ -79,10 +77,6 @@ export function PesertaForm({
     if (!isValidNrp(nrp)) {
       return "NRP harus 8 digit angka.";
     }
-    const terpakai = findPesertaNrpTerpakai(existing, nrp, initial?.id);
-    if (terpakai) {
-      return pesanNrpSudahTerpakai(terpakai.nama, nrp);
-    }
     return "";
   }
 
@@ -101,11 +95,7 @@ export function PesertaForm({
     }));
 
     if (key === "nrp") {
-      const pesan = pesanNrp(String(nextValue));
-      setNrpError(pesan);
-      if (pesan.startsWith("NRP ") && pesan.includes("sudah terpakai")) {
-        notify("error", pesan);
-      }
+      setNrpError(pesanNrp(String(nextValue)));
     }
   }
 
@@ -116,15 +106,6 @@ export function PesertaForm({
       const pesan = "NRP harus 8 digit angka.";
       setNrpError(pesan);
       setError(pesan);
-      return;
-    }
-
-    const terpakai = findPesertaNrpTerpakai(existing, form.nrp, initial?.id);
-    if (terpakai) {
-      const pesan = pesanNrpSudahTerpakai(terpakai.nama, form.nrp);
-      setNrpError(pesan);
-      setError(pesan);
-      notify("error", pesan);
       return;
     }
 
@@ -165,9 +146,6 @@ export function PesertaForm({
       if (!res.ok) {
         const message = data.error || "Gagal menyimpan peserta.";
         setError(message);
-        if (String(message).includes("sudah terpakai")) {
-          setNrpError(message);
-        }
         notify("error", message);
         return;
       }
@@ -445,7 +423,7 @@ export function PesertaForm({
           style={{
             width: "auto",
           }}
-          disabled={loading || !nrpValid8Digit || Boolean(nrpError)}
+          disabled={loading || !nrpValid8Digit}
         >
           {loading
             ? "Menyimpan..."

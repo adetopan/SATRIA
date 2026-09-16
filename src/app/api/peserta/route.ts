@@ -4,7 +4,7 @@ import { STAFF_ADMIN_ROLES } from "@/lib/roles";
 import { getPeserta, savePeserta, uid } from "@/lib/db";
 import { recordActivity } from "@/lib/activity-log";
 import { pesertaActivityLabel } from "@/lib/activity-labels";
-import { isValidNrp, normalizeNrp, findPesertaNrpTerpakai, pesanNrpSudahTerpakai } from "@/lib/format";
+import { isValidNrp, normalizeNrp } from "@/lib/format";
 import {
   permohonanFileError,
   savePermohonanFile,
@@ -101,13 +101,6 @@ export async function POST(request: Request) {
   }
 
   const list = await getPeserta();
-  const terpakai = findPesertaNrpTerpakai(list, peserta.nrp);
-  if (terpakai) {
-    return NextResponse.json(
-      { error: pesanNrpSudahTerpakai(terpakai.nama, peserta.nrp) },
-      { status: 409 },
-    );
-  }
 
   list.unshift(peserta);
   await savePeserta(list);

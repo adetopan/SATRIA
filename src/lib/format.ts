@@ -58,20 +58,6 @@ export function isValidNrp(nrp: string) {
   return /^\d{8}$/.test(normalizeNrp(nrp));
 }
 
-export function findPesertaNrpTerpakai<
-  T extends { id: string; nrp: string; nama: string },
->(list: T[], nrp: string, excludeId?: string) {
-  const target = normalizeNrp(nrp);
-  if (!target) return undefined;
-  return list.find(
-    (item) => item.id !== excludeId && normalizeNrp(item.nrp) === target,
-  );
-}
-
-export function pesanNrpSudahTerpakai(nama: string, nrp: string) {
-  return `NRP ${normalizeNrp(nrp)} sudah terpakai atas nama ${nama}.`;
-}
-
 export function labelKeperluan(value: string) {
   switch (value) {
     case "IZIN_SENJATA":

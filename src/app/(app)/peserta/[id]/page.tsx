@@ -312,7 +312,6 @@ export default async function PesertaDetailPage({ params }: Params) {
           <PesertaForm
             initial={peserta}
             mode="edit"
-            existing={pesertaList}
           />
         </div>
       ) : null}
