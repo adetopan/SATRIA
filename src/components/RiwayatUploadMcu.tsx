@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { formatDate } from "@/lib/format";
+import { formatDate, formatDateTime } from "@/lib/format";
 import { useToast } from "@/components/ToastProvider";
 import type { Peserta, Rikkes } from "@/lib/types";
 
@@ -429,6 +429,10 @@ export function RiwayatUploadMcu({
                   </th>
 
                   <th>
+                    Tgl & Jam Input
+                  </th>
+
+                  <th>
                     Diunggah Oleh
                   </th>
 
@@ -516,6 +520,14 @@ export function RiwayatUploadMcu({
                             r.tanggalPemeriksaan
                           )}
 
+                        </td>
+
+
+                        {/* ====================
+                            TGL JAM INPUT
+                        ===================== */}
+                        <td>
+                          {formatDateTime(r.createdAt)}
                         </td>
 
 

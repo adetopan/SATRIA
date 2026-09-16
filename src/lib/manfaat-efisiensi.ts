@@ -1,5 +1,5 @@
 import { ACTIVITY_ACTION_LABEL } from "@/lib/activity-labels";
-import { isValidNrp, normalizeNrp } from "@/lib/format";
+import { formatDateTime, isValidNrp, normalizeNrp } from "@/lib/format";
 import type { ActivityLog, IzinSenjata, Peserta, Rikkes } from "@/lib/types";
 
 export type ManfaatBaris = {
@@ -18,6 +18,17 @@ export type ManfaatAksi = {
 export type ManfaatHarian = {
   hari: string;
   n: number;
+};
+
+export type ManfaatResponRincian = {
+  id: string;
+  nama: string;
+  tglPeserta: string;
+  tglMcu: string;
+  tglIzin: string;
+  hariPesertaKeMcu: string;
+  hariMcuKeIzin: string;
+  hariTotal: string;
 };
 
 export type ManfaatResponTahap = {
@@ -51,6 +62,7 @@ export type ManfaatEfisiensiLaporan = {
     menungguMcu: string;
     menungguIzin: string;
     catatan: string;
+    rincian: ManfaatResponRincian[];
   };
   kelengkapan: ManfaatBaris[];
   efisiensi: ManfaatBaris[];
@@ -115,6 +127,12 @@ function daysBetween(fromIso: string, toIso: string) {
   const start = new Date(`${from}T00:00:00+07:00`).getTime();
   const end = new Date(`${to}T00:00:00+07:00`).getTime();
   return Math.round((end - start) / 864e5);
+}
+
+function formatTglInput(iso?: string) {
+  if (!iso) return "—";
+  const formatted = formatDateTime(iso);
+  return !formatted || formatted === "-" ? "—" : formatted;
 }
 
 function formatDurasi(days: number | null) {
@@ -237,6 +255,35 @@ export function buildManfaatEfisiensiLaporan(
     }
   }
 
+  const rincian: ManfaatResponRincian[] = [...peserta]
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .map((row) => {
+      const mcu = mcuPertama.get(row.id);
+      const putusan = izinPutusan.get(row.id);
+      const mcuWaktu = putusan?.rikkesId
+        ? rikkes.find((item) => item.id === putusan.rikkesId)?.createdAt ||
+          mcu?.createdAt
+        : mcu?.createdAt;
+      const keMcu = mcu ? daysBetween(row.createdAt, mcu.createdAt) : null;
+      const keIzin =
+        mcuWaktu && putusan
+          ? daysBetween(mcuWaktu, putusan.updatedAt)
+          : null;
+      const total = putusan
+        ? daysBetween(row.createdAt, putusan.updatedAt)
+        : null;
+      return {
+        id: row.id,
+        nama: row.nama,
+        tglPeserta: formatTglInput(row.createdAt),
+        tglMcu: formatTglInput(mcu?.createdAt),
+        tglIzin: formatTglInput(putusan?.updatedAt),
+        hariPesertaKeMcu: formatDurasi(keMcu),
+        hariMcuKeIzin: formatDurasi(keIzin),
+        hariTotal: formatDurasi(total),
+      };
+    });
+
   const aksiMap = new Map<string, number>();
   for (const log of logs) {
     aksiMap.set(log.action, (aksiMap.get(log.action) || 0) + 1);
@@ -307,6 +354,7 @@ export function buildManfaatEfisiensiLaporan(
         jedaPesertaKeIzin.length <= 1
           ? "Hitungan memakai selisih tanggal kalender (1 hari, 2 hari, dst). Nilai tengah adalah angka di urutan tengah, bukan rata-rata."
           : "Hitungan memakai selisih tanggal kalender Asia/Jakarta. Nilai tengah adalah angka di urutan tengah, bukan rata-rata.",
+      rincian,
     },
     kelengkapan: [
       {

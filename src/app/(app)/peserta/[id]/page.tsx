@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { isStaffAdmin } from "@/lib/roles";
 import { getIzin, getPeserta, getRikkes } from "@/lib/db";
-import { formatDate, labelKeperluan } from "@/lib/format";
+import { formatDate, formatDateTime, labelKeperluan } from "@/lib/format";
 import { IzinBadge, RikkesBadge } from "@/components/StatusBadge";
 import { PesertaForm } from "@/components/PesertaForm";
 import { canPrintSkhpk } from "@/lib/skhpk";
@@ -74,6 +74,10 @@ export default async function PesertaDetailPage({ params }: Params) {
             </dd>
           </div>
           <div>
+            <dt>Tgl & Jam Input</dt>
+            <dd>{formatDateTime(peserta.createdAt)}</dd>
+          </div>
+          <div>
             <dt>Tanggal Lahir</dt>
             <dd>{formatDate(peserta.tanggalLahir)}</dd>
           </div>
@@ -120,6 +124,7 @@ export default async function PesertaDetailPage({ params }: Params) {
               <thead>
                 <tr>
                   <th>Nama</th>
+                  <th>Tgl & Jam Input</th>
                   <th>Pangkat</th>
                   <th>Jabatan</th>
                   <th>Satuan</th>
@@ -136,6 +141,7 @@ export default async function PesertaDetailPage({ params }: Params) {
                         {p.nama}
                       </Link>
                     </td>
+                    <td>{formatDateTime(p.createdAt)}</td>
                     <td>{p.pangkat || "-"}</td>
                     <td>{p.jabatan || "-"}</td>
                     <td>{p.satuan || "-"}</td>
@@ -183,7 +189,8 @@ export default async function PesertaDetailPage({ params }: Params) {
               <thead>
                 <tr>
                   <th>Nomor Surat</th>
-                  <th>Tanggal</th>
+                  <th>Tanggal MCU</th>
+                  <th>Tgl & Jam Input</th>
                   <th>Dokter</th>
                   <th>Hasil</th>
                   <th>Berkas / SKHPK</th>
@@ -204,6 +211,7 @@ export default async function PesertaDetailPage({ params }: Params) {
                       ) : null}
                     </td>
                     <td>{formatDate(r.tanggalPemeriksaan)}</td>
+                    <td>{formatDateTime(r.createdAt)}</td>
                     <td>{r.dokter}</td>
                     <td>
                       <RikkesBadge value={r.hasil} />
@@ -259,7 +267,8 @@ export default async function PesertaDetailPage({ params }: Params) {
                 <tr>
                   <th>Nomor</th>
                   <th>Jenis</th>
-                  <th>Tanggal</th>
+                  <th>Tanggal Pengajuan</th>
+                  <th>Tgl & Jam Input</th>
                   <th>Status</th>
                   <th>Aksi</th>
                 </tr>
@@ -277,6 +286,7 @@ export default async function PesertaDetailPage({ params }: Params) {
                       <td>{i.nomorPermohonan}</td>
                       <td>{i.jenisSenjata}</td>
                       <td>{formatDate(i.tanggalPengajuan)}</td>
+                      <td>{formatDateTime(i.createdAt)}</td>
                       <td>
                         <IzinBadge value={i.status} />
                       </td>

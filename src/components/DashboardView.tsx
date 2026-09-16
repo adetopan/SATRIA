@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { formatDate, labelKeperluan } from "@/lib/format";
+import { formatDate, formatDateTime, labelKeperluan } from "@/lib/format";
 import { IzinBadge, RikkesBadge } from "@/components/StatusBadge";
 import type { IzinSenjata, Peserta, Rikkes, Role } from "@/lib/types";
 
@@ -484,6 +484,7 @@ export function DashboardView({
                   <tr>
                     <th>Nama</th>
                     <th>NRP</th>
+                    <th>Tgl & Jam Input</th>
                     <th>Pangkat</th>
                     <th>Jabatan</th>
                     <th>Satuan</th>
@@ -509,6 +510,7 @@ export function DashboardView({
                         </Link>
                       </td>
                       <td>{p.nrp}</td>
+                      <td>{formatDateTime(p.createdAt)}</td>
                       <td>{p.pangkat || "-"}</td>
                       <td>{p.jabatan || "-"}</td>
                       <td>{p.satuan || "-"}</td>
@@ -652,7 +654,8 @@ export function DashboardView({
                 <thead>
                   <tr>
                     <th>Nomor Surat</th>
-                    <th>Tanggal</th>
+                    <th>Tanggal MCU</th>
+                    <th>Tgl & Jam Input</th>
                     <th>Hasil</th>
                   </tr>
                 </thead>
@@ -673,6 +676,7 @@ export function DashboardView({
                           </div>
                         </td>
                         <td>{formatDate(r.tanggalPemeriksaan)}</td>
+                        <td>{formatDateTime(r.createdAt)}</td>
                         <td>
                           <RikkesBadge value={r.hasil} />
                         </td>
@@ -710,6 +714,7 @@ export function DashboardView({
                     <th>Nomor</th>
                     <th>Peserta</th>
                     <th>Jenis</th>
+                    <th>Tgl & Jam Input</th>
                     <th>Status</th>
                   </tr>
                 </thead>
@@ -721,6 +726,7 @@ export function DashboardView({
                         <td>{i.nomorPermohonan}</td>
                         <td>{p?.nama || "-"}</td>
                         <td>{i.jenisSenjata}</td>
+                        <td>{formatDateTime(i.createdAt)}</td>
                         <td>
                           <IzinBadge value={i.status} />
                         </td>

@@ -208,6 +208,48 @@ export function ManfaatEfisiensiView({
           <li>{laporan.respon.menungguMcu}</li>
           <li>{laporan.respon.menungguIzin}</li>
         </ul>
+
+        <div className="panel-head" style={{ marginTop: "1.2rem" }}>
+          <div>
+            <h2>Tanggal inputan</h2>
+            <p>
+              Tanggal dan jam data peserta diinput, hasil MCU masuk, dan
+              izin diputus.
+            </p>
+          </div>
+        </div>
+        {laporan.respon.rincian.length === 0 ? (
+          <p className="empty">Belum ada data peserta.</p>
+        ) : (
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Peserta</th>
+                  <th>Tgl & jam input peserta</th>
+                  <th>Tgl & jam input MCU</th>
+                  <th>Tgl & jam putusan izin</th>
+                  <th>Peserta → MCU</th>
+                  <th>MCU → izin</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {laporan.respon.rincian.map((row) => (
+                  <tr key={row.id}>
+                    <td>{row.nama}</td>
+                    <td>{row.tglPeserta}</td>
+                    <td>{row.tglMcu}</td>
+                    <td>{row.tglIzin}</td>
+                    <td>{row.hariPesertaKeMcu}</td>
+                    <td>{row.hariMcuKeIzin}</td>
+                    <td>{row.hariTotal}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
 
       <section className="panel">

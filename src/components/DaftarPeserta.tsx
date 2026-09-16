@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { formatDate } from "@/lib/format";
+import { formatDate, formatDateTime } from "@/lib/format";
 import type { Peserta } from "@/lib/types";
 
 type Props = {
@@ -358,6 +358,7 @@ export function DaftarPeserta({ peserta }: Props) {
                 <tr>
                   <th>Nama</th>
                   <th>NRP</th>
+                  <th>Tgl & Jam Input</th>
                   <th>Nomor Permohonan</th>
                   <th>Pangkat</th>
                   <th>Jabatan</th>
@@ -383,6 +384,7 @@ export function DaftarPeserta({ peserta }: Props) {
                       </td>
 
                       <td>{p.nrp}</td>
+                      <td>{formatDateTime(p.createdAt)}</td>
                       <td>
                         {p.nomorPermohonan || "-"}
                         {p.suratPermohonanFilePath ? (

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { formatDate } from "@/lib/format";
+import { formatDate, formatDateTime } from "@/lib/format";
 import { IzinBadge } from "@/components/StatusBadge";
 import { IzinStatusActions } from "@/components/IzinStatusActions";
 import { KirimWaButton } from "@/components/KirimWaButton";
@@ -472,6 +472,10 @@ export function RiwayatIzinSenjata({
                 </th>
 
                 <th>
+                  Tgl & Jam Input
+                </th>
+
+                <th>
                   Jenis
                 </th>
 
@@ -577,6 +581,10 @@ export function RiwayatIzinSenjata({
                         HP:{" "}
                         {p?.noHp || "-"}
                       </div>
+                    </td>
+
+                    <td>
+                      {formatDateTime(i.createdAt)}
                     </td>
 
                     {/* JENIS */}
